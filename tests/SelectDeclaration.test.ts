@@ -43,6 +43,7 @@ describe("SelectDeclaration", () => {
 				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const resultType = decl!.resolveResultType();
 				expect(resultType).toStrictEqual({
 					id: {
