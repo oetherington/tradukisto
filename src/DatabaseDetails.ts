@@ -1,11 +1,11 @@
 import type { PostgresClient } from "./PostgresClient";
 
 export type ColumnDetails = {
-	tableName: string,
-	columnName: string,
-	dataType: string,
-	isNullable: boolean,
-}
+	tableName: string;
+	columnName: string;
+	dataType: string;
+	isNullable: boolean;
+};
 
 export type TableDetails = Record<string, ColumnDetails>;
 
@@ -13,7 +13,8 @@ export type DatabaseDetails = Record<string, TableDetails>;
 
 export const fetchColumnDetails = (
 	client: PostgresClient,
-): Promise<ColumnDetails[]> => client.fetchRows<ColumnDetails>(`
+): Promise<ColumnDetails[]> =>
+	client.fetchRows<ColumnDetails>(`
 	SELECT
 		c.table_name AS "tableName",
 		c.column_name AS "columnName",
@@ -35,9 +36,9 @@ export const columnDetailsToDatabaseDetails = (
 		result[details.tableName][details.columnName] = details;
 	}
 	return result;
-}
+};
 
 export const fetchDatabaseDetails = async (client: PostgresClient) => {
 	const columnDetails = await fetchColumnDetails(client);
 	return columnDetailsToDatabaseDetails(columnDetails);
-}
+};

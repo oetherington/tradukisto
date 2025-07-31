@@ -2,19 +2,19 @@
 	"name": "tradukisto",
 	"version": "0.0.1",
 	"description": "PostgreSQL to Typescript translator",
+	"homepage": "https://github.com/oetherington/tradukisto#readme",
+	"bugs": {
+		"url": "https://github.com/oetherington/tradukisto/issues"
+	},
+	"repository": "github:oetherington/tradukisto",
 	"license": "AGPL-3.0-or-later",
 	"author": {
 		"name": "Ollie Etherington",
 		"url": "https://github.com/oetherington"
 	},
-	"repository": "github:oetherington/tradukisto",
-	"homepage": "https://github.com/oetherington/tradukisto#readme",
-	"bugs": {
-		"url": "https://github.com/oetherington/tradukisto/issues"
-	},
-	"bin": "dist/Cli.js",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"bin": "dist/Cli.js",
 	"files": [
 		"/dist"
 	],

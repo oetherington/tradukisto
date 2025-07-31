@@ -1,4 +1,4 @@
-import { expect, describe, it } from 'vitest'
+import { expect, describe, it } from "vitest";
 import { parseSql } from "../src";
 
 describe("Parser", () => {
@@ -25,7 +25,7 @@ describe("Parser", () => {
 				},
 				from: [
 					{
-						table: 'users',
+						table: "users",
 						as: null,
 						db: null,
 					},
@@ -52,63 +52,63 @@ describe("Parser", () => {
 					{
 						as: null,
 						expr: {
-							type: 'number',
-							value: 1
+							type: "number",
+							value: 1,
 						},
-						type: 'expr'
-					}
+						type: "expr",
+					},
 				],
 				distinct: {
-					type: null
+					type: null,
 				},
 				from: null,
 				groupby: null,
 				having: null,
 				into: {
-					position: null
+					position: null,
 				},
 				limit: {
-					seperator: '',
-					value: []
+					seperator: "",
+					value: [],
 				},
 				options: null,
 				orderby: null,
-				type: 'select',
+				type: "select",
 				where: null,
 				window: null,
-				with: null
+				with: null,
 			},
 			{
 				columns: [
 					{
 						as: null,
 						expr: {
-							type: 'number',
-							value: 2
+							type: "number",
+							value: 2,
 						},
-						type: 'expr'
-					}
+						type: "expr",
+					},
 				],
 				distinct: {
-					type: null
+					type: null,
 				},
 				from: null,
 				groupby: null,
 				having: null,
 				into: {
-					position: null
+					position: null,
 				},
 				limit: {
-					seperator: '',
-					value: []
+					seperator: "",
+					value: [],
 				},
 				options: null,
 				orderby: null,
-				type: 'select',
+				type: "select",
 				where: null,
 				window: null,
-				with: null
-			}
+				with: null,
+			},
 		]);
 	});
 });

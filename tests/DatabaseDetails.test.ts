@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PglitePostgresClient } from "./PglitePostgresClient";
-import {
-	columnDetailsToDatabaseDetails,
-	fetchDatabaseDetails,
-} from "../src";
+import { columnDetailsToDatabaseDetails, fetchDatabaseDetails } from "../src";
 
 describe("DatabaseDetails", () => {
 	it("Converts empty column details to empty database details", () => {

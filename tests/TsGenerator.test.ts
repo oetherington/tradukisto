@@ -5,12 +5,12 @@ describe("TsGenerator", () => {
 	describe("Generates simple Typescript types", () => {
 		const types = {
 			"character varying": "string",
-			"text": "string",
-			"integer": "number",
-			"vector": "string[]",
+			text: "string",
+			integer: "number",
+			vector: "string[]",
 			"double precision": "number",
-			"boolean": "boolean",
-			"jsonb": "any", // TODO
+			boolean: "boolean",
+			jsonb: "any", // TODO
 			"timestamp with time zone": "Date",
 		};
 		for (const ty in types) {
@@ -88,9 +88,7 @@ describe("TsGenerator", () => {
 				isNullable: false,
 			},
 		});
-		expect(generator.toString()).toBe(
-			"type Test = {\n  a: unknown,\n}",
-		);
+		expect(generator.toString()).toBe("type Test = {\n  a: unknown,\n}");
 	});
 	it("Can chain multiple declarations", () => {
 		const generator = new TsGenerator();
@@ -128,7 +126,7 @@ describe("TsGenerator", () => {
 					dataType: "integer",
 					isNullable: true,
 				},
-		});
+			});
 		}).toThrow();
 	});
 });

@@ -3,12 +3,12 @@ import type { FieldDetails, ResolvedType } from "./Declaration";
 export class TsGenerator {
 	private static readonly dataTypes: Record<string, string> = {
 		"character varying": "string",
-		"text": "string",
-		"integer": "number",
-		"vector": "string[]",
+		text: "string",
+		integer: "number",
+		vector: "string[]",
 		"double precision": "number",
-		"boolean": "boolean",
-		"jsonb": "any", // TODO
+		boolean: "boolean",
+		jsonb: "any", // TODO
 		"timestamp with time zone": "Date",
 	};
 
@@ -28,20 +28,21 @@ export class TsGenerator {
 			suffix = "[]";
 		}
 		return (TsGenerator.dataTypes[dataType] ?? "unknown") + suffix;
-	}
+	};
 
 	private fieldDetailsToTSType = (
-		{dataType, isNullable}: FieldDetails,
+		{ dataType, isNullable }: FieldDetails,
 		indent: number,
 	) => {
-		const base = typeof dataType === "string"
-			? this.generateSimpleType(dataType)
-			: this.generateFieldDetailsRecord(dataType, indent + 2);
+		const base =
+			typeof dataType === "string"
+				? this.generateSimpleType(dataType)
+				: this.generateFieldDetailsRecord(dataType, indent + 2);
 		return isNullable ? base + " | null" : base;
-	}
+	};
 
 	private fieldDetailsToTS(details: FieldDetails, indent: number) {
-		return `${details.name}: ${this.fieldDetailsToTSType(details, indent)},`
+		return `${details.name}: ${this.fieldDetailsToTSType(details, indent)},`;
 	}
 
 	private generateFieldDetailsRecord(
@@ -54,7 +55,7 @@ export class TsGenerator {
 			lines.push(spaces + this.fieldDetailsToTS(details, indent));
 		}
 		lines.push(" ".repeat(indent) + "}");
-		return lines.join("\n")
+		return lines.join("\n");
 	}
 
 	private generateType(name: string, value: Record<string, FieldDetails>) {

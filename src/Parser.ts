@@ -9,4 +9,4 @@ export const parseSql = (sql: string): AST[] => {
 		},
 	});
 	return Array.isArray(result) ? result : [result];
-}
+};

@@ -1,4 +1,4 @@
-import { expect, describe, it } from 'vitest'
+import { expect, describe, it } from "vitest";
 import { resolveUnqualifiedSource, Sources } from "../src";
 
 describe("Sources", () => {

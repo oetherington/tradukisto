@@ -18,17 +18,14 @@ export class SelectDeclaration {
 	private databaseDetails: DatabaseDetails;
 	private ast: Select;
 
-	constructor(
-		databaseDetails: DatabaseDetails,
-		ast: Select
-	) {
+	constructor(databaseDetails: DatabaseDetails, ast: Select) {
 		this.databaseDetails = databaseDetails;
 		this.ast = ast;
 	}
 
 	private resolveExprList(sources: Sources, expr: ExprList) {
-		const items = expr.value.map(
-			(e: ExpressionValue) => this.resolveExpression(sources, e),
+		const items = expr.value.map((e: ExpressionValue) =>
+			this.resolveExpression(sources, e),
 		);
 		const result: ResolvedType = {};
 		for (const item of items) {
@@ -44,10 +41,7 @@ export class SelectDeclaration {
 		};
 	}
 
-	private resolveColumnRef(
-		sources: Sources,
-		item: ColumnRefItem,
-	): FieldDetails {
+	private resolveColumnRef(sources: Sources, item: ColumnRefItem): FieldDetails {
 		let columnName: string;
 		if (typeof item.column === "string") {
 			columnName = item.column;
@@ -95,14 +89,14 @@ export class SelectDeclaration {
 		expr: ExpressionValue,
 	): FieldDetails {
 		switch (expr.type) {
-		case "expr_list":
-			return this.resolveExprList(sources, expr as ExprList);
-		case "column_ref":
-			return this.resolveColumnRef(sources, expr as ColumnRefItem);
-		default:
-			throw new Error("Unknown expression type: " + expr.type);
+			case "expr_list":
+				return this.resolveExprList(sources, expr as ExprList);
+			case "column_ref":
+				return this.resolveColumnRef(sources, expr as ColumnRefItem);
+			default:
+				throw new Error("Unknown expression type: " + expr.type);
 		}
-	};
+	}
 
 	private resolveColumn(sources: Sources, column: Column): FieldDetails {
 		if (!column.expr) {

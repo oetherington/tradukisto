@@ -30,6 +30,6 @@ const cliMain = async () => {
 	}
 	const result = generator.toString();
 	console.log("result", result);
-}
+};
 
 cliMain();
