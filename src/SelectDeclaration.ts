@@ -24,7 +24,7 @@ export class SelectDeclaration {
 	}
 
 	private resolveExprList(sources: Sources, expr: ExprList) {
-		const items = expr.value.map((e: ExpressionValue) =>
+		const items = expr.value.flatMap((e: ExpressionValue) =>
 			this.resolveExpression(sources, e),
 		);
 		const result: ResolvedType = {};
@@ -41,7 +41,16 @@ export class SelectDeclaration {
 		};
 	}
 
-	private resolveColumnRef(sources: Sources, item: ColumnRefItem): FieldDetails {
+	private starSelectSource({ isNullable, table }: Source): FieldDetails[] {
+		const fieldNames = Object.keys(table);
+		return fieldNames.map((name) => ({
+			name,
+			dataType: table[name].dataType,
+			isNullable: isNullable || table[name].isNullable,
+		}));
+	}
+
+	private resolveColumnRef(sources: Sources, item: ColumnRefItem): FieldDetails[] {
 		let columnName: string;
 		if (typeof item.column === "string") {
 			columnName = item.column;
@@ -58,16 +67,36 @@ export class SelectDeclaration {
 			throw new Error("Couldn't find column name");
 		}
 
+		const isStarSelect = columnName === "*";
+
 		let source: Source;
 		if (item.table) {
-			const sourceName = item.table;
+			let sourceName = item.table;
 			if (!sourceName) {
 				throw new Error("Missing source name");
 			}
+			// The librarry types say this case should never happen, but
+			// empirically is does...
+			if (typeof sourceName === "object") {
+				const sourceNameObject = sourceName as unknown as {
+					type: "default";
+					value: string;
+				};
+				if (sourceNameObject.value) {
+					sourceName = sourceNameObject.value;
+				}
+			}
 			source = sources[sourceName];
 			if (!source) {
-				throw new Error("Missing source: " + sourceName);
+				throw new Error("Missing source: " + JSON.stringify(sourceName));
 			}
+			if (isStarSelect) {
+				return this.starSelectSource(source);
+			}
+		} else if (isStarSelect) {
+			return Object.values(sources).flatMap((source) =>
+				this.starSelectSource(source),
+			);
 		} else {
 			source = resolveUnqualifiedSource(sources, columnName);
 		}
@@ -77,20 +106,22 @@ export class SelectDeclaration {
 			throw new Error("Column not found: " + columnName);
 		}
 
-		return {
-			name: columnName,
-			dataType: columnDetails.dataType,
-			isNullable: columnDetails.isNullable || source.isNullable,
-		};
+		return [
+			{
+				name: columnName,
+				dataType: columnDetails.dataType,
+				isNullable: columnDetails.isNullable || source.isNullable,
+			},
+		];
 	}
 
 	private resolveExpression(
 		sources: Sources,
 		expr: ExpressionValue,
-	): FieldDetails {
+	): FieldDetails[] {
 		switch (expr.type) {
 			case "expr_list":
-				return this.resolveExprList(sources, expr as ExprList);
+				return [this.resolveExprList(sources, expr as ExprList)];
 			case "column_ref":
 				return this.resolveColumnRef(sources, expr as ColumnRefItem);
 			default:
@@ -98,14 +129,17 @@ export class SelectDeclaration {
 		}
 	}
 
-	private resolveColumn(sources: Sources, column: Column): FieldDetails {
+	private resolveColumn(sources: Sources, column: Column): FieldDetails[] {
 		if (!column.expr) {
 			throw new Error("Column has no expression");
 		}
 		const result = this.resolveExpression(sources, column.expr);
 		if (column.as) {
+			if (result.length !== 1) {
+				throw new Error("Can't use AS with *");
+			}
 			if (typeof column.as === "string") {
-				result.name = column.as;
+				result[0].name = column.as;
 			} else {
 				throw new Error("Complex AS not supported");
 			}
@@ -119,11 +153,12 @@ export class SelectDeclaration {
 
 		const result: ResolvedType = {};
 		for (const column of ast.columns) {
-			const resolvedColumn = this.resolveColumn(sources, column);
-			if (result[resolvedColumn.name]) {
-				throw new Error("Duplicate column: " + resolvedColumn.name);
+			for (const resolvedColumn of this.resolveColumn(sources, column)) {
+				if (result[resolvedColumn.name]) {
+					throw new Error("Duplicate column: " + resolvedColumn.name);
+				}
+				result[resolvedColumn.name] = resolvedColumn;
 			}
-			result[resolvedColumn.name] = resolvedColumn;
 		}
 		return result;
 	}

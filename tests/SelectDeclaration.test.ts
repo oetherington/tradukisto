@@ -55,4 +55,149 @@ describe("SelectDeclaration", () => {
 			});
 		}
 	});
+	it("Resolves unqualified star fields", () => {
+		const decl = createDeclaration(
+			{
+				users: {
+					id: {
+						tableName: "users",
+						columnName: "id",
+						dataType: "integer",
+						isNullable: false,
+					},
+					name: {
+						tableName: "users",
+						columnName: "name",
+						dataType: "text",
+						isNullable: false,
+					},
+				},
+				posts: {
+					userId: {
+						tableName: "posts",
+						columnName: "userId",
+						dataType: "integer",
+						isNullable: true,
+					},
+				},
+			},
+			parseSql("SELECT * FROM users JOIN posts")[0],
+		);
+		expect(decl).not.toBeNull();
+		expect(decl).toBeInstanceOf(SelectDeclaration);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const resultType = decl!.resolveResultType();
+		expect(resultType).toStrictEqual({
+			id: {
+				name: "id",
+				dataType: "integer",
+				isNullable: false,
+			},
+			name: {
+				name: "name",
+				dataType: "text",
+				isNullable: false,
+			},
+			userId: {
+				name: "userId",
+				dataType: "integer",
+				isNullable: true,
+			},
+		});
+	});
+	it("Resolves qualified star fields", () => {
+		const decl = createDeclaration(
+			{
+				users: {
+					id: {
+						tableName: "users",
+						columnName: "id",
+						dataType: "integer",
+						isNullable: false,
+					},
+					name: {
+						tableName: "users",
+						columnName: "name",
+						dataType: "text",
+						isNullable: false,
+					},
+				},
+				posts: {
+					userId: {
+						tableName: "posts",
+						columnName: "userId",
+						dataType: "integer",
+						isNullable: true,
+					},
+				},
+			},
+			parseSql("SELECT users.* FROM users JOIN posts")[0],
+		);
+		expect(decl).not.toBeNull();
+		expect(decl).toBeInstanceOf(SelectDeclaration);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const resultType = decl!.resolveResultType();
+		expect(resultType).toStrictEqual({
+			id: {
+				name: "id",
+				dataType: "integer",
+				isNullable: false,
+			},
+			name: {
+				name: "name",
+				dataType: "text",
+				isNullable: false,
+			},
+		});
+	});
+	it("Star fields disallow conflicts", () => {
+		const decl = createDeclaration(
+			{
+				users: {
+					id: {
+						tableName: "users",
+						columnName: "id",
+						dataType: "integer",
+						isNullable: false,
+					},
+					name: {
+						tableName: "users",
+						columnName: "name",
+						dataType: "text",
+						isNullable: false,
+					},
+				},
+				posts: {
+					id: {
+						tableName: "posts",
+						columnName: "id",
+						dataType: "integer",
+						isNullable: true,
+					},
+				},
+			},
+			parseSql("SELECT * FROM users JOIN posts")[0],
+		);
+		expect(decl).not.toBeNull();
+		expect(decl).toBeInstanceOf(SelectDeclaration);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		expect(() => decl!.resolveResultType()).toThrow();
+	});
+	// describe("Resolves input types", () => {
+	// 	it("Resolves simple input type", () => {
+	// 		const decl = createDeclaration(
+	// 			{
+	// 				users: {
+	// 					id: {
+	// 						tableName: "users",
+	// 						columnName: "id",
+	// 						dataType: "text",
+	// 						isNullable: false,
+	// 					},
+	// 				},
+	// 			},
+	// 			parseSql("SELECT * from ")[0],
+	// 		);
+	// 	});
+	// });
 });
