@@ -1,0 +1,37 @@
+{
+	"name": "tradukisto",
+	"version": "0.0.1",
+	"description": "PostgreSQL to Typescript translator",
+	"license": "AGPL-3.0-or-later",
+	"author": {
+		"name": "Ollie Etherington",
+		"url": "https://github.com/oetherington"
+	},
+	"repository": "github:oetherington/tradukisto",
+	"homepage": "https://github.com/oetherington/tradukisto#readme",
+	"bugs": {
+		"url": "https://github.com/oetherington/tradukisto/issues"
+	},
+	"bin": "dist/Cli.js",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [ "/dist" ],
+	"scripts": {
+		"build": "tsup",
+		"test": "vitest run --coverage",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"node-sql-parser": "^5.3.10",
+		"pg": "^8.16.3"
+	},
+	"devDependencies": {
+		"@electric-sql/pglite": "^0.3.5",
+		"@types/node": "^24.1.0",
+		"@types/pg": "^8.15.4",
+		"@vitest/coverage-v8": "^3.2.4",
+		"tsup": "^8.5.0",
+		"typescript": "^5.8.3",
+		"vitest": "^3.2.4"
+	}
+}

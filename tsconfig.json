@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"outDir": "./dist",
+		"module": "esnext",
+		"target": "esnext",
+		"lib": ["esnext"],
+		"moduleResolution": "node",
+		"jsx": "react",
+		"sourceMap": true,
+		"declaration": true,
+		"esModuleInterop": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noImplicitAny": true,
+		"strict": true,
+		"useUnknownInCatchVariables": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"allowSyntheticDefaultImports": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
+}
