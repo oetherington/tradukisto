@@ -6,3 +6,4 @@ export * from "./PostgresClient";
 export * from "./SelectDeclaration";
 export * from "./Sources";
 export * from "./TsGenerator";
+export * from "./Visitor";

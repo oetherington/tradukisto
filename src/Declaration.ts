@@ -12,6 +12,7 @@ export type ResolvedType = Record<string, FieldDetails>;
 
 export interface Declaration {
 	resolveResultType(): ResolvedType;
+	resolveParameterTypes(): Record<string, string | null>;
 }
 
 export const createDeclaration = (

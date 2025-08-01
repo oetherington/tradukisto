@@ -1,4 +1,5 @@
 import type {
+	Cast,
 	Column,
 	ColumnRefItem,
 	ExpressionValue,
@@ -13,6 +14,7 @@ import {
 } from "./Sources";
 import type { DatabaseDetails } from "./DatabaseDetails";
 import type { ResolvedType, FieldDetails } from "./Declaration";
+import { Visitor } from "./Visitor";
 
 export class SelectDeclaration {
 	private databaseDetails: DatabaseDetails;
@@ -161,5 +163,59 @@ export class SelectDeclaration {
 			}
 		}
 		return result;
+	}
+
+	resolveParameterTypes(): Record<string, string | null> {
+		const params: Record<string, string | null> = {};
+
+		// First just make sure we find _all_ the parameters, but don't make
+		// any attempt at typechecking
+		type Param = { type: "param"; value: string };
+		const isParam = (value: unknown): value is Param =>
+			!!value &&
+			typeof value === "object" &&
+			"type" in value &&
+			value.type === "param" &&
+			"value" in value &&
+			!!value.value &&
+			typeof value.value === "string";
+		new Visitor<Param>(isParam, (value) => (params[value.value] = null)).visit(
+			this.ast,
+		);
+
+		// Now fill in the types for any parameters with explicit casts
+		type CastedParam = Omit<Cast, "expr"> & { expr: Param };
+		new Visitor<CastedParam>(
+			(value): value is CastedParam =>
+				!!value &&
+				typeof value === "object" &&
+				"type" in value &&
+				value.type === "cast" &&
+				"expr" in value &&
+				isParam(value.expr),
+			(value) => {
+				const paramName = value.expr.value;
+				const dataType = value.target[0]?.dataType?.toLowerCase();
+				if (!paramName || !dataType) {
+					throw new Error("Invalid cast expression");
+				}
+				const currentType = params[paramName];
+				if (currentType && currentType !== dataType) {
+					throw new Error(`Conflicting types for :${paramName}`);
+				}
+				params[paramName] = dataType;
+			},
+		).visit(this.ast);
+
+		// If everything was explicitely casted then we're done
+		if (Object.values(params).every((value) => !!value)) {
+			return params;
+		}
+
+		// Finally add some special cases to try to figure out as many types as
+		// possible
+		// TODO
+
+		return params;
 	}
 }

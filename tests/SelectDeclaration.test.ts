@@ -55,6 +55,7 @@ describe("SelectDeclaration", () => {
 			});
 		}
 	});
+
 	it("Resolves unqualified star fields", () => {
 		const decl = createDeclaration(
 			{
@@ -105,6 +106,7 @@ describe("SelectDeclaration", () => {
 			},
 		});
 	});
+
 	it("Resolves qualified star fields", () => {
 		const decl = createDeclaration(
 			{
@@ -150,6 +152,7 @@ describe("SelectDeclaration", () => {
 			},
 		});
 	});
+
 	it("Star fields disallow conflicts", () => {
 		const decl = createDeclaration(
 			{
@@ -183,21 +186,76 @@ describe("SelectDeclaration", () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		expect(() => decl!.resolveResultType()).toThrow();
 	});
-	// describe("Resolves input types", () => {
-	// 	it("Resolves simple input type", () => {
-	// 		const decl = createDeclaration(
-	// 			{
-	// 				users: {
-	// 					id: {
-	// 						tableName: "users",
-	// 						columnName: "id",
-	// 						dataType: "text",
-	// 						isNullable: false,
-	// 					},
-	// 				},
-	// 			},
-	// 			parseSql("SELECT * from ")[0],
-	// 		);
-	// 	});
-	// });
+
+	describe("Resolves paramater types", () => {
+		type ParameterTestCase = {
+			query: string;
+			expectedParameters: Record<string, string | null>;
+		};
+		const parameterTestCases: Record<string, ParameterTestCase> = {
+			booleanExpression: {
+				query: "SELECT * FROM users WHERE :id",
+				expectedParameters: { id: null },
+			},
+			simpleEqualityExpression: {
+				query: "SELECT * FROM users WHERE id = :id",
+				expectedParameters: { id: null },
+			},
+			castExpression: {
+				query: "SELECT * FROM users WHERE id = :id::TEXT",
+				expectedParameters: { id: "text" },
+			},
+			paramInSelectedColumn: {
+				query: 'SELECT *, :value AS "value" FROM users',
+				expectedParameters: { value: null },
+			},
+		};
+
+		// console.log(parseSql("SELECT * FROM users WHERE id = :id::TEXT")[0].where);
+		for (const testName in parameterTestCases) {
+			const { query, expectedParameters } = parameterTestCases[testName];
+			it(testName, () => {
+				const decl = createDeclaration(
+					{
+						users: {
+							id: {
+								tableName: "users",
+								columnName: "id",
+								dataType: "text",
+								isNullable: false,
+							},
+						},
+					},
+					parseSql(query)[0],
+				);
+				expect(decl).not.toBeNull();
+				expect(decl).toBeInstanceOf(SelectDeclaration);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const parameterTypes = decl!.resolveParameterTypes();
+				expect(parameterTypes).toStrictEqual(expectedParameters);
+			});
+		}
+
+		it("Disallows conflicting casts", () => {
+			const decl = createDeclaration(
+				{
+					users: {
+						id: {
+							tableName: "users",
+							columnName: "id",
+							dataType: "text",
+							isNullable: false,
+						},
+					},
+				},
+				parseSql(
+					"SELECT *, :value::TEXT FROM users WHERE :value::BOOLEAN",
+				)[0],
+			);
+			expect(decl).not.toBeNull();
+			expect(decl).toBeInstanceOf(SelectDeclaration);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			expect(() => decl!.resolveParameterTypes()).toThrow();
+		});
+	});
 });
