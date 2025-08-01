@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createDeclaration, parseSql, SelectDeclaration } from "../src";
+import {
+	createDeclaration,
+	parseSql,
+	ResolvedType,
+	SelectDeclaration,
+} from "../src";
 
 describe("SelectDeclaration", () => {
 	const parseSingle = (sql: string) => {
@@ -196,24 +201,32 @@ describe("SelectDeclaration", () => {
 	describe("Resolves paramater types", () => {
 		type ParameterTestCase = {
 			query: string;
-			expectedParameters: Record<string, string | null>;
+			expectedParameters: ResolvedType;
 		};
 		const parameterTestCases: Record<string, ParameterTestCase> = {
 			booleanExpression: {
 				query: "SELECT * FROM users WHERE :id",
-				expectedParameters: { id: null },
+				expectedParameters: {
+					id: { name: "id", dataType: "unknown", isNullable: true },
+				},
 			},
 			simpleEqualityExpression: {
 				query: "SELECT * FROM users WHERE id = :id",
-				expectedParameters: { id: null },
+				expectedParameters: {
+					id: { name: "id", dataType: "unknown", isNullable: true },
+				},
 			},
 			castExpression: {
 				query: "SELECT * FROM users WHERE id = :id::TEXT",
-				expectedParameters: { id: "text" },
+				expectedParameters: {
+					id: { name: "id", dataType: "text", isNullable: true },
+				},
 			},
 			paramInSelectedColumn: {
 				query: 'SELECT *, :value AS "value" FROM users',
-				expectedParameters: { value: null },
+				expectedParameters: {
+					value: { name: "value", dataType: "unknown", isNullable: true },
+				},
 			},
 		};
 

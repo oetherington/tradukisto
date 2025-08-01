@@ -11,11 +11,12 @@ export class TsGenerator extends Generator {
 		boolean: "boolean",
 		jsonb: "any", // TODO
 		"timestamp with time zone": "Date",
+		unknown: "unknown",
 	};
 
 	private types: Record<string, ResolvedType> = {};
 
-	addType(name: string, ty: Record<string, FieldDetails>) {
+	addType(name: string, ty: ResolvedType) {
 		if (this.types[name]) {
 			throw new Error("Duplicate type name: " + name);
 		}
@@ -46,10 +47,7 @@ export class TsGenerator extends Generator {
 		return `${details.name}: ${this.fieldDetailsToTSType(details, indent)},`;
 	}
 
-	private generateFieldDetailsRecord(
-		value: Record<string, FieldDetails>,
-		indent: number,
-	) {
+	private generateFieldDetailsRecord(value: ResolvedType, indent: number) {
 		const lines = [`{`];
 		const spaces = " ".repeat(indent + 2);
 		for (const details of Object.values(value)) {
@@ -59,7 +57,7 @@ export class TsGenerator extends Generator {
 		return lines.join("\n");
 	}
 
-	private generateType(name: string, value: Record<string, FieldDetails>) {
+	private generateType(name: string, value: ResolvedType) {
 		return `export interface ${name} ${this.generateFieldDetailsRecord(value, 0)}`;
 	}
 

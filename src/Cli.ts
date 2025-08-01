@@ -29,7 +29,9 @@ const processFile = async (
 		const query = queries[i];
 		const decl = decls[i];
 		const returnType = decl.resolveResultType();
+		const parameterTypes = decl.resolveParameterTypes();
 		generator.addType(query.typeName, returnType);
+		generator.addType(query.typeName + "Params", parameterTypes);
 	}
 	const contents = generator.toString();
 

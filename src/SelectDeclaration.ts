@@ -165,8 +165,8 @@ export class SelectDeclaration {
 		return result;
 	}
 
-	resolveParameterTypes(): Record<string, string | null> {
-		const params: Record<string, string | null> = {};
+	resolveParameterTypes(): ResolvedType {
+		const params: ResolvedType = {};
 
 		// First just make sure we find _all_ the parameters, but don't make
 		// any attempt at typechecking
@@ -179,9 +179,13 @@ export class SelectDeclaration {
 			"value" in value &&
 			!!value.value &&
 			typeof value.value === "string";
-		new Visitor<Param>(isParam, (value) => (params[value.value] = null)).visit(
-			this.ast,
-		);
+		new Visitor<Param>(isParam, (value) => {
+			params[value.value] = {
+				name: value.value,
+				dataType: "unknown",
+				isNullable: true,
+			};
+		}).visit(this.ast);
 
 		// Now fill in the types for any parameters with explicit casts
 		type CastedParam = Omit<Cast, "expr"> & { expr: Param };
@@ -200,10 +204,18 @@ export class SelectDeclaration {
 					throw new Error("Invalid cast expression");
 				}
 				const currentType = params[paramName];
-				if (currentType && currentType !== dataType) {
+				if (
+					currentType &&
+					currentType.dataType !== dataType &&
+					currentType.dataType !== "unknown"
+				) {
 					throw new Error(`Conflicting types for :${paramName}`);
 				}
-				params[paramName] = dataType;
+				params[paramName] = {
+					name: paramName,
+					dataType,
+					isNullable: true,
+				};
 			},
 		).visit(this.ast);
 
