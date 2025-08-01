@@ -3,7 +3,7 @@ import { TsGenerator } from "../src";
 
 describe("TsGenerator", () => {
 	describe("Generates simple Typescript types", () => {
-		const types = {
+		const types: Record<string, string> = {
 			"character varying": "string",
 			text: "string",
 			integer: "number",

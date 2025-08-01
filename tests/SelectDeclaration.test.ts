@@ -2,8 +2,14 @@ import { describe, expect, it } from "vitest";
 import { createDeclaration, parseSql, SelectDeclaration } from "../src";
 
 describe("SelectDeclaration", () => {
+	const parseSingle = (sql: string) => {
+		const queries = parseSql("-- @name testQuery\n" + sql);
+		expect(queries.length).toBe(1);
+		return queries[0].ast;
+	};
+
 	describe("Resolves simple named fields", () => {
-		const simpleFieldTestQueries = {
+		const simpleFieldTestQueries: Record<string, string> = {
 			noQuotes: `SELECT id FROM users`,
 			fieldQuotes: `SELECT "id" FROM users`,
 			tableQuotes: `SELECT id FROM "users"`,
@@ -39,7 +45,7 @@ describe("SelectDeclaration", () => {
 							},
 						},
 					},
-					parseSql(testQuery)[0],
+					parseSingle(testQuery),
 				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -82,7 +88,7 @@ describe("SelectDeclaration", () => {
 					},
 				},
 			},
-			parseSql("SELECT * FROM users JOIN posts")[0],
+			parseSingle("SELECT * FROM users JOIN posts"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -133,7 +139,7 @@ describe("SelectDeclaration", () => {
 					},
 				},
 			},
-			parseSql("SELECT users.* FROM users JOIN posts")[0],
+			parseSingle("SELECT users.* FROM users JOIN posts"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -179,7 +185,7 @@ describe("SelectDeclaration", () => {
 					},
 				},
 			},
-			parseSql("SELECT * FROM users JOIN posts")[0],
+			parseSingle("SELECT * FROM users JOIN posts"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -211,7 +217,6 @@ describe("SelectDeclaration", () => {
 			},
 		};
 
-		// console.log(parseSql("SELECT * FROM users WHERE id = :id::TEXT")[0].where);
 		for (const testName in parameterTestCases) {
 			const { query, expectedParameters } = parameterTestCases[testName];
 			it(testName, () => {
@@ -226,7 +231,7 @@ describe("SelectDeclaration", () => {
 							},
 						},
 					},
-					parseSql(query)[0],
+					parseSingle(query),
 				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -248,9 +253,9 @@ describe("SelectDeclaration", () => {
 						},
 					},
 				},
-				parseSql(
+				parseSingle(
 					"SELECT *, :value::TEXT FROM users WHERE :value::BOOLEAN",
-				)[0],
+				),
 			);
 			expect(decl).not.toBeNull();
 			expect(decl).toBeInstanceOf(SelectDeclaration);

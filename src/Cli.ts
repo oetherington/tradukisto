@@ -14,21 +14,24 @@ const cliMain = async () => {
 
 	const client = new PgPostgresClient(databaseUrl);
 	const databaseDetails = await fetchDatabaseDetails(client);
-	const asts = parseSql(`
+	const queries = parseSql(`
 		SELECT p."_id", u."_id" "userId"
 		FROM "Posts" p
 		LEFT JOIN "Users" u ON p."userId" = u."_id";
 	`);
-	const decls = asts
-		.map((ast) => createDeclaration(databaseDetails, ast))
+	const decls = queries
+		.map((query) => createDeclaration(databaseDetails, query.ast))
 		.filter(Boolean) as Declaration[];
 
 	const generator = new TsGenerator();
-	for (const decl of decls) {
+	for (let i = 0; i < queries.length; i++) {
+		const query = queries[i];
+		const decl = decls[i];
 		const returnType = decl.resolveResultType();
-		generator.addType("TestType", returnType);
+		generator.addType(query.name, returnType);
 	}
 	const result = generator.toString();
+	// TODO
 	console.log("result", result);
 };
 
