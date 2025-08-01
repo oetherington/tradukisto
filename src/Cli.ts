@@ -62,9 +62,9 @@ const cliMain = async () => {
 	for (const fileName of fileNames) {
 		const generator = new TsGenerator();
 		promises.push(processFile(databaseDetails, generator, fileName));
-		console.log("filename", fileName);
 	}
 	const results = await Promise.all(promises);
+	// eslint-disable-next-line no-console
 	console.log("Wrote files:", results);
 };
 
