@@ -1,10 +1,11 @@
 import { AST, Parser } from "node-sql-parser";
 
 const commentedQueryRegex =
-	/--\s*@name\s+([a-z][a-zA-Z0-9_]*)\s*\n([\s\S]*?)(?=--\s*@name|\s*$)/gm;
+	/--\s*@name\s+([a-z][a-zA-Z0-9_]*)\s*\r?\n((?:(?!--\s*@name).|\s)*)/gm;
 
 type ParsedQuery = {
-	name: string;
+	queryName: string;
+	typeName: string;
 	query: string;
 	ast: AST;
 };
@@ -12,14 +13,12 @@ type ParsedQuery = {
 export const parseSql = (sqlQuery: string): ParsedQuery[] => {
 	const parser = new Parser();
 	const results = Array.from(sqlQuery.matchAll(commentedQueryRegex));
-	if (!results) {
-		throw new Error("Failed to parse query");
-	}
-	if (!results.length) {
+	if (!results?.length) {
 		throw new Error("No queries found");
 	}
 	const queries: ParsedQuery[] = results.map((result) => {
-		const name = result[1];
+		const queryName = result[1];
+		const typeName = `I${queryName[0].toUpperCase()}${queryName.slice(1)}`;
 		const query = result[2].trim();
 		let ast = parser.astify(query, { database: "postgresql" });
 		if (Array.isArray(ast)) {
@@ -30,7 +29,8 @@ export const parseSql = (sqlQuery: string): ParsedQuery[] => {
 			}
 		}
 		return {
-			name,
+			queryName,
+			typeName,
 			query,
 			ast,
 		};

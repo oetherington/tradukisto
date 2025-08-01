@@ -24,7 +24,7 @@ describe("TsGenerator", () => {
 					},
 				});
 				expect(generator.toString()).toBe(
-					`type Test = {\n  value: ${types[ty]},\n}`,
+					`export interface Test {\n  value: ${types[ty]},\n}`,
 				);
 			});
 		}
@@ -39,7 +39,7 @@ describe("TsGenerator", () => {
 			},
 		});
 		expect(generator.toString()).toBe(
-			"type Test = {\n  value: string | null,\n}",
+			"export interface Test {\n  value: string | null,\n}",
 		);
 	});
 	it("Generates array Typescript types", () => {
@@ -57,7 +57,7 @@ describe("TsGenerator", () => {
 			},
 		});
 		expect(generator.toString()).toBe(
-			"type Test = {\n  a: string[],\n  b: number[] | null,\n}",
+			"export interface Test {\n  a: string[],\n  b: number[] | null,\n}",
 		);
 	});
 	it("Generates nested typesript types", () => {
@@ -76,7 +76,7 @@ describe("TsGenerator", () => {
 			},
 		});
 		expect(generator.toString()).toBe(
-			"type Test = {\n  outer: {\n    inner: string,\n  } | null,\n}",
+			"export interface Test {\n  outer: {\n    inner: string,\n  } | null,\n}",
 		);
 	});
 	it("Other types are `unkown`", () => {
@@ -88,7 +88,9 @@ describe("TsGenerator", () => {
 				isNullable: false,
 			},
 		});
-		expect(generator.toString()).toBe("type Test = {\n  a: unknown,\n}");
+		expect(generator.toString()).toBe(
+			"export interface Test {\n  a: unknown,\n}",
+		);
 	});
 	it("Can chain multiple declarations", () => {
 		const generator = new TsGenerator();
@@ -107,7 +109,7 @@ describe("TsGenerator", () => {
 			},
 		});
 		expect(generator.toString()).toBe(
-			"type Test = {\n  a: string,\n}\n\ntype Example = {\n  b: number,\n}",
+			"export interface Test {\n  a: string,\n}\n\nexport interface Example {\n  b: number,\n}",
 		);
 	});
 	it("Doesn't allow duplicate type names", () => {

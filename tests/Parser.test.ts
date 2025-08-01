@@ -5,7 +5,7 @@ describe("Parser", () => {
 	it("parser single SQL statement into an AST array", () => {
 		const queries = parseSql("-- @name testQuery\nSELECT * FROM users");
 		expect(queries.length).toBe(1);
-		expect(queries[0].name).toBe("testQuery");
+		expect(queries[0].queryName).toBe("testQuery");
 		expect(queries[0].ast).toStrictEqual({
 			type: "select",
 			where: null,
@@ -53,7 +53,26 @@ describe("Parser", () => {
 			SELECT * FROM posts;
 		`);
 		expect(queries.length).toBe(2);
-		expect(queries[0].name).toBe("myFirstQuery");
-		expect(queries[1].name).toBe("mySecondQuery");
+		expect(queries[0].queryName).toBe("myFirstQuery");
+		expect(queries[1].queryName).toBe("mySecondQuery");
+	});
+	it("Parses queries split over multiple lines", () => {
+		const queries = parseSql(`
+			-- @name testQuery
+			SELECT
+				name
+			FROM
+				users
+			WHERE
+				_id = 0;
+		`);
+		expect(queries.length).toBe(1);
+		expect(queries[0].queryName).toBe("testQuery");
+	});
+	it("Generates type name from query name", () => {
+		const queries = parseSql("-- @name testQuery\nSELECT * FROM users");
+		expect(queries.length).toBe(1);
+		expect(queries[0].queryName).toBe("testQuery");
+		expect(queries[0].typeName).toBe("ITestQuery");
 	});
 });

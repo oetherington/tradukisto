@@ -1,6 +1,7 @@
 import type { FieldDetails, ResolvedType } from "./Declaration";
+import { Generator } from "./Generator";
 
-export class TsGenerator {
+export class TsGenerator extends Generator {
 	private static readonly dataTypes: Record<string, string> = {
 		"character varying": "string",
 		text: "string",
@@ -59,7 +60,7 @@ export class TsGenerator {
 	}
 
 	private generateType(name: string, value: Record<string, FieldDetails>) {
-		return `type ${name} = ${this.generateFieldDetailsRecord(value, 0)}`;
+		return `export interface ${name} ${this.generateFieldDetailsRecord(value, 0)}`;
 	}
 
 	toString(): string {
