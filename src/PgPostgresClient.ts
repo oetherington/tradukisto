@@ -1,25 +1,30 @@
-import { Client } from "pg";
+import postgres, { ParameterOrJSON, Sql } from "postgres";
 import { PostgresClient } from "./PostgresClient";
 
 export class PgPostgresClient extends PostgresClient {
-	private client: Client;
+	private sql: Sql;
 
 	constructor(databaseUrl: string) {
 		super();
-		this.client = new Client(databaseUrl);
+		this.sql = postgres(databaseUrl);
 	}
 
-	async fetchRows<T>(sql: string): Promise<T[]> {
+	async fetchRows<T>(sql: string, params: unknown[] = []): Promise<T[]> {
 		try {
-			await this.client.connect();
-			const { rows } = await this.client.query(sql);
-			return rows;
+			const rows = await this.sql.unsafe(
+				sql,
+				params as ParameterOrJSON<never>[],
+				{ prepare: params.length === 0 },
+			);
+			return rows as unknown as T[];
 		} catch (error) {
 			throw new Error("Failed to fetch rows from Postgres", {
 				cause: error,
 			});
-		} finally {
-			await this.client.end();
 		}
+	}
+
+	async end(timeout?: number) {
+		await this.sql.end({ timeout });
 	}
 }

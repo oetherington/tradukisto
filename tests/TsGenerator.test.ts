@@ -131,4 +131,11 @@ describe("TsGenerator", () => {
 			});
 		}).toThrow();
 	});
+	it("Outputs SQL string", () => {
+		const generator = new TsGenerator();
+		generator.addSqlString("testQuerySql", "SELECT * FROM users");
+		expect(generator.toString()).toBe(
+			"export const testQuerySql = `-- testQuerySql\nSELECT * FROM users`;",
+		);
+	});
 });

@@ -15,12 +15,20 @@ export class TsGenerator extends Generator {
 	};
 
 	private types: Record<string, ResolvedType> = {};
+	private sqlStrings: Record<string, string> = {};
 
 	addType(name: string, ty: ResolvedType) {
 		if (this.types[name]) {
 			throw new Error("Duplicate type name: " + name);
 		}
 		this.types[name] = ty;
+	}
+
+	addSqlString(name: string, sql: string) {
+		if (this.sqlStrings[name]) {
+			throw new Error("Duplicate query name: " + name);
+		}
+		this.sqlStrings[name] = sql;
 	}
 
 	private generateSimpleType = (dataType: string): string => {
@@ -61,10 +69,23 @@ export class TsGenerator extends Generator {
 		return `export interface ${name} ${this.generateFieldDetailsRecord(value, 0)}`;
 	}
 
+	private generateSqlString(name: string, sql: string) {
+		const comment = `-- ${name}\n`;
+		const escapedSql = sql.replaceAll("`", "\\`");
+		return `export const ${name} = \`${comment}${escapedSql}\`;`;
+	}
+
 	toString(): string {
 		const result: string[] = [];
 		for (const name in this.types) {
+			const ty = this.types[name];
+			if (!Object.keys(ty).length) {
+				continue;
+			}
 			result.push(this.generateType(name, this.types[name]));
+		}
+		for (const name in this.sqlStrings) {
+			result.push(this.generateSqlString(name, this.sqlStrings[name]));
 		}
 		return result.join("\n\n");
 	}

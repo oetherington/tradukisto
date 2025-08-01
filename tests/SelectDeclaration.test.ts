@@ -5,6 +5,7 @@ import {
 	ResolvedType,
 	SelectDeclaration,
 } from "../src";
+import { ParamMap } from "../src/ParamMap";
 
 describe("SelectDeclaration", () => {
 	const parseSingle = (sql: string) => {
@@ -51,6 +52,7 @@ describe("SelectDeclaration", () => {
 						},
 					},
 					parseSingle(testQuery),
+					new ParamMap(),
 				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -94,6 +96,7 @@ describe("SelectDeclaration", () => {
 				},
 			},
 			parseSingle("SELECT * FROM users JOIN posts"),
+			new ParamMap(),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -145,6 +148,7 @@ describe("SelectDeclaration", () => {
 				},
 			},
 			parseSingle("SELECT users.* FROM users JOIN posts"),
+			new ParamMap(),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -191,6 +195,7 @@ describe("SelectDeclaration", () => {
 				},
 			},
 			parseSingle("SELECT * FROM users JOIN posts"),
+			new ParamMap(),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -201,29 +206,34 @@ describe("SelectDeclaration", () => {
 	describe("Resolves paramater types", () => {
 		type ParameterTestCase = {
 			query: string;
+			paramMap: ParamMap;
 			expectedParameters: ResolvedType;
 		};
 		const parameterTestCases: Record<string, ParameterTestCase> = {
 			booleanExpression: {
 				query: "SELECT * FROM users WHERE :id",
+				paramMap: new ParamMap(["id"]),
 				expectedParameters: {
 					id: { name: "id", dataType: "unknown", isNullable: true },
 				},
 			},
 			simpleEqualityExpression: {
 				query: "SELECT * FROM users WHERE id = :id",
+				paramMap: new ParamMap(["id"]),
 				expectedParameters: {
 					id: { name: "id", dataType: "unknown", isNullable: true },
 				},
 			},
 			castExpression: {
 				query: "SELECT * FROM users WHERE id = :id::TEXT",
+				paramMap: new ParamMap(["id"]),
 				expectedParameters: {
 					id: { name: "id", dataType: "text", isNullable: true },
 				},
 			},
 			paramInSelectedColumn: {
 				query: 'SELECT *, :value AS "value" FROM users',
+				paramMap: new ParamMap(["value"]),
 				expectedParameters: {
 					value: { name: "value", dataType: "unknown", isNullable: true },
 				},
@@ -231,7 +241,8 @@ describe("SelectDeclaration", () => {
 		};
 
 		for (const testName in parameterTestCases) {
-			const { query, expectedParameters } = parameterTestCases[testName];
+			const { query, paramMap, expectedParameters } =
+				parameterTestCases[testName];
 			it(testName, () => {
 				const decl = createDeclaration(
 					{
@@ -245,6 +256,7 @@ describe("SelectDeclaration", () => {
 						},
 					},
 					parseSingle(query),
+					paramMap,
 				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -269,6 +281,7 @@ describe("SelectDeclaration", () => {
 				parseSingle(
 					"SELECT *, :value::TEXT FROM users WHERE :value::BOOLEAN",
 				),
+				new ParamMap(),
 			);
 			expect(decl).not.toBeNull();
 			expect(decl).toBeInstanceOf(SelectDeclaration);

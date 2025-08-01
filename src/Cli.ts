@@ -23,7 +23,9 @@ const processFile = async (
 	const fileContents = await readFile(fileName, "utf8");
 	const queries = parseSql(fileContents);
 	const decls = queries
-		.map((query) => createDeclaration(databaseDetails, query.ast))
+		.map((query) =>
+			createDeclaration(databaseDetails, query.ast, query.paramMap),
+		)
 		.filter(Boolean) as Declaration[];
 	for (let i = 0; i < queries.length; i++) {
 		const query = queries[i];
@@ -32,6 +34,7 @@ const processFile = async (
 		const parameterTypes = decl.resolveParameterTypes();
 		generator.addType(query.typeName, returnType);
 		generator.addType(query.typeName + "Params", parameterTypes);
+		generator.addSqlString(query.queryName + "Sql", query.query);
 	}
 	const contents = generator.toString();
 
@@ -68,6 +71,8 @@ const cliMain = async () => {
 	const results = await Promise.all(promises);
 	// eslint-disable-next-line no-console
 	console.log("Wrote files:", results);
+
+	await client.end();
 };
 
 cliMain();

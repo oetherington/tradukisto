@@ -75,4 +75,17 @@ describe("Parser", () => {
 		expect(queries[0].queryName).toBe("testQuery");
 		expect(queries[0].typeName).toBe("ITestQuery");
 	});
+	it("Converts named params to numbered params", () => {
+		const queries = parseSql("-- @name testQuery\nSELECT :id, :title");
+		expect(queries.length).toBe(1);
+		const query = queries[0];
+		expect(query.query).toBe("SELECT $1, $2");
+		expect(query.paramMap.count()).toBe(2);
+		expect(query.paramMap.getParamArray()).toStrictEqual(["id", "title"]);
+		expect(query.paramMap.getParamMap()).toStrictEqual({ id: 1, title: 2 });
+		expect(query.paramMap.getParamIndex("id")).toBe(1);
+		expect(query.paramMap.getParamIndex("title")).toBe(2);
+		expect(query.paramMap.getParamName(1)).toBe("id");
+		expect(query.paramMap.getParamName(2)).toBe("title");
+	});
 });

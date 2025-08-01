@@ -1,5 +1,6 @@
 import type { AST } from "node-sql-parser";
 import type { DatabaseDetails } from "./DatabaseDetails";
+import type { ParamMap } from "./ParamMap";
 import { SelectDeclaration } from "./SelectDeclaration";
 
 export type FieldDetails = {
@@ -18,10 +19,11 @@ export interface Declaration {
 export const createDeclaration = (
 	databaseDetails: DatabaseDetails,
 	ast: AST,
+	paramMap: ParamMap,
 ): Declaration | null => {
 	switch (ast.type) {
 		case "select":
-			return new SelectDeclaration(databaseDetails, ast);
+			return new SelectDeclaration(databaseDetails, ast, paramMap);
 		default:
 			return null;
 	}

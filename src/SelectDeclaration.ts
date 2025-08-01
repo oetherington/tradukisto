@@ -12,6 +12,7 @@ import {
 	Source,
 	Sources,
 } from "./Sources";
+import { isParam, ParamAST, ParamMap } from "./ParamMap";
 import type { DatabaseDetails } from "./DatabaseDetails";
 import type { ResolvedType, FieldDetails } from "./Declaration";
 import { Visitor } from "./Visitor";
@@ -19,10 +20,12 @@ import { Visitor } from "./Visitor";
 export class SelectDeclaration {
 	private databaseDetails: DatabaseDetails;
 	private ast: Select;
+	private paramMap: ParamMap;
 
-	constructor(databaseDetails: DatabaseDetails, ast: Select) {
+	constructor(databaseDetails: DatabaseDetails, ast: Select, paramMap: ParamMap) {
 		this.databaseDetails = databaseDetails;
 		this.ast = ast;
+		this.paramMap = paramMap;
 	}
 
 	private resolveExprList(sources: Sources, expr: ExprList) {
@@ -170,25 +173,16 @@ export class SelectDeclaration {
 
 		// First just make sure we find _all_ the parameters, but don't make
 		// any attempt at typechecking
-		type Param = { type: "param"; value: string };
-		const isParam = (value: unknown): value is Param =>
-			!!value &&
-			typeof value === "object" &&
-			"type" in value &&
-			value.type === "param" &&
-			"value" in value &&
-			!!value.value &&
-			typeof value.value === "string";
-		new Visitor<Param>(isParam, (value) => {
-			params[value.value] = {
-				name: value.value,
+		for (const paramName of this.paramMap.getParamArray()) {
+			params[paramName] = {
+				name: paramName,
 				dataType: "unknown",
 				isNullable: true,
 			};
-		}).visit(this.ast);
+		}
 
 		// Now fill in the types for any parameters with explicit casts
-		type CastedParam = Omit<Cast, "expr"> & { expr: Param };
+		type CastedParam = Omit<Cast, "expr"> & { expr: ParamAST };
 		new Visitor<CastedParam>(
 			(value): value is CastedParam =>
 				!!value &&

@@ -1,5 +1,6 @@
 export * from "./DatabaseDetails";
 export * from "./Declaration";
+export * from "./Generator";
 export * from "./Parser";
 export * from "./PgPostgresClient";
 export * from "./PostgresClient";
