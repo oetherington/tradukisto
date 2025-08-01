@@ -1,7 +1,7 @@
 {
 	"name": "tradukisto",
 	"version": "0.0.1",
-	"description": "PostgreSQL to Typescript translator",
+	"description": "Generate Typescript types for SQL queries",
 	"homepage": "https://github.com/oetherington/tradukisto#readme",
 	"bugs": {
 		"url": "https://github.com/oetherington/tradukisto/issues"
