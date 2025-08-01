@@ -1,4 +1,5 @@
 npm run typecheck
 npm run lint
 npm run format
+npm run build
 git update-index --again
