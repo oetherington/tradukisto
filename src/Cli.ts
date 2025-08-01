@@ -23,20 +23,16 @@ const processFile = async (
 	const fileContents = await readFile(fileName, "utf8");
 	const queries = parseSql(fileContents);
 	const decls = queries
-		.map((query) =>
-			createDeclaration(databaseDetails, query.ast, query.paramMap),
-		)
+		.map((query) => createDeclaration(databaseDetails, query))
 		.filter(Boolean) as Declaration[];
 	for (let i = 0; i < queries.length; i++) {
 		const query = queries[i];
 		const decl = decls[i];
-		const returnType = decl.resolveResultType();
-		const parameterTypes = decl.resolveParameterTypes();
-		generator.addType(query.typeName, returnType);
-		generator.addType(query.typeName + "Params", parameterTypes);
-		generator.addSqlString(query.queryName + "Sql", query.query);
+		generator.addDeclaration(query.queryName, decl);
 	}
-	const contents = generator.toString();
+
+	const repoName = queries[0].repoName;
+	const contents = generator.toString(repoName);
 
 	const outputFileName = fileName.replace(/sql$/, "queries.ts");
 	await writeFile(outputFileName, fileHeader + contents);

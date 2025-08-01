@@ -2,10 +2,12 @@ import { AST, Parser } from "node-sql-parser";
 import { Visitor } from "./Visitor";
 import { isParam, ParamAST, ParamMap } from "./ParamMap";
 
+const repoNameRegex = /--\s*@repo\s+([A-Z][a-zA-Z0-9_]*)/;
 const commentedQueryRegex =
 	/--\s*@name\s+([a-z][a-zA-Z0-9_]*)\s*\r?\n((?:(?!--\s*@name).|\s)*)/gm;
 
-type ParsedQuery = {
+export type ParsedQuery = {
+	repoName?: string;
 	queryName: string;
 	typeName: string;
 	query: string;
@@ -15,6 +17,10 @@ type ParsedQuery = {
 
 export const parseSql = (sqlQuery: string): ParsedQuery[] => {
 	const parser = new Parser();
+
+	const repoMatch = sqlQuery.match(repoNameRegex);
+	const repoName = repoMatch?.[1];
+
 	const results = Array.from(sqlQuery.matchAll(commentedQueryRegex));
 	if (!results?.length) {
 		throw new Error("No queries found");
@@ -54,6 +60,7 @@ export const parseSql = (sqlQuery: string): ParsedQuery[] => {
 			: rawQuery;
 
 		return {
+			repoName,
 			queryName,
 			typeName,
 			query,

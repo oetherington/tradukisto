@@ -1,34 +1,53 @@
-import type { FieldDetails, ResolvedType } from "./Declaration";
+import {
+	ANON_COLUMN_NAME,
+	type Declaration,
+	type FieldDetails,
+	type ResolvedType,
+} from "./Declaration";
 import { Generator } from "./Generator";
+import { ParamMap } from "./ParamMap";
 
 export class TsGenerator extends Generator {
 	private static readonly dataTypes: Record<string, string> = {
-		"character varying": "string",
-		text: "string",
-		integer: "number",
-		vector: "string[]",
-		"double precision": "number",
+		bigint: "BigInt",
+		bigserial: "BigInt",
 		boolean: "boolean",
+		bytea: "ArrayBuffer",
+		"character varying": "string",
+		cidr: "string",
+		date: "Date",
+		varchar: "string",
+		"double precision": "number",
+		inet: "string",
+		integer: "number",
+		interval: "number",
+		json: "any", // TODO
 		jsonb: "any", // TODO
+		money: "number",
+		real: "number",
+		smallint: "number",
+		smallserial: "number",
+		serial: "number",
+		text: "string",
+		time: "Date",
+		"time without time zone": "Date",
+		"time with time zone": "Date",
+		"timestamp without time zone": "Date",
 		"timestamp with time zone": "Date",
+		tsquery: "string[]",
+		tsvector: "string[]",
 		unknown: "unknown",
+		uuid: "string",
+		xml: "string",
 	};
 
-	private types: Record<string, ResolvedType> = {};
-	private sqlStrings: Record<string, string> = {};
+	private declarations: Record<string, Declaration> = {};
 
-	addType(name: string, ty: ResolvedType) {
-		if (this.types[name]) {
-			throw new Error("Duplicate type name: " + name);
+	addDeclaration(name: string, decl: Declaration) {
+		if (this.declarations[name]) {
+			throw new Error(`Duplicate declaration: ${name}`);
 		}
-		this.types[name] = ty;
-	}
-
-	addSqlString(name: string, sql: string) {
-		if (this.sqlStrings[name]) {
-			throw new Error("Duplicate query name: " + name);
-		}
-		this.sqlStrings[name] = sql;
+		this.declarations[name] = decl;
 	}
 
 	private generateSimpleType = (dataType: string): string => {
@@ -52,6 +71,9 @@ export class TsGenerator extends Generator {
 	};
 
 	private fieldDetailsToTS(details: FieldDetails, indent: number) {
+		if (details.name === ANON_COLUMN_NAME) {
+			throw new Error("You must name all anonymous columns");
+		}
 		return `${details.name}: ${this.fieldDetailsToTSType(details, indent)},`;
 	}
 
@@ -65,7 +87,7 @@ export class TsGenerator extends Generator {
 		return lines.join("\n");
 	}
 
-	private generateType(name: string, value: ResolvedType) {
+	generateType(name: string, value: ResolvedType) {
 		return `export interface ${name} ${this.generateFieldDetailsRecord(value, 0)}`;
 	}
 
@@ -75,17 +97,74 @@ export class TsGenerator extends Generator {
 		return `export const ${name} = \`${comment}${escapedSql}\`;`;
 	}
 
-	toString(): string {
-		const result: string[] = [];
-		for (const name in this.types) {
-			const ty = this.types[name];
-			if (!Object.keys(ty).length) {
-				continue;
-			}
-			result.push(this.generateType(name, this.types[name]));
+	private generateImports(repoName?: string): string[] {
+		return repoName ? ['import type { PostgresClient } from "tradukisto";'] : [];
+	}
+
+	private queryNameToSqlName(queryName: string) {
+		return queryName + "Sql";
+	}
+
+	private typeNameToParamsName(queryName: string) {
+		return queryName + "Params";
+	}
+
+	private generateParams(typeName: string, paramMap: ParamMap): [string, string] {
+		if (!paramMap.count()) {
+			return ["", ""];
 		}
-		for (const name in this.sqlStrings) {
-			result.push(this.generateSqlString(name, this.sqlStrings[name]));
+		const namedArgs = `params: ${this.typeNameToParamsName(typeName)}`;
+		const paramArray = paramMap.getParamArray();
+		const positionalArgs = paramArray.map((item) => `params.${item}`).join(", ");
+		return [namedArgs, `, [${positionalArgs}]`];
+	}
+
+	private generateRepoMethod(decl: Declaration) {
+		const { queryName, typeName, paramMap } = decl.getParsedQuery();
+		const sqlName = this.queryNameToSqlName(queryName);
+		const [namedArgs, positionalArgs] = this.generateParams(typeName, paramMap);
+		const result: string[] = [
+			`\n  ${queryName}(${namedArgs}): Promise<${typeName}[]> {`,
+			`    return this.client.fetchRows(${sqlName}${positionalArgs});`,
+			"  }",
+		];
+		return result.join("\n");
+	}
+
+	private generateRepo(name: string): string {
+		const result: string[] = [
+			`export class ${name}Repo {`,
+			"  protected client: PostgresClient;\n",
+			"  constructor(client: PostgresClient) {",
+			"    this.client = client;",
+			"  }",
+		];
+		for (const declName in this.declarations) {
+			result.push(this.generateRepoMethod(this.declarations[declName]));
+		}
+		result.push("}");
+		return result.join("\n");
+	}
+
+	toString(repoName?: string): string {
+		const result = this.generateImports(repoName);
+		for (const declName in this.declarations) {
+			const decl = this.declarations[declName];
+			const { queryName, typeName, query } = decl.getParsedQuery();
+			const paramTypeName = this.typeNameToParamsName(typeName);
+			const sqlStringName = this.queryNameToSqlName(queryName);
+			const resultType = decl.resolveResultType();
+			const parameterTypes = decl.resolveParameterTypes();
+			if (Object.keys(resultType).length) {
+				result.push(this.generateType(typeName, resultType));
+			}
+			if (Object.keys(parameterTypes).length) {
+				result.push(this.generateType(paramTypeName, parameterTypes));
+			}
+			result.push(this.generateSqlString(sqlStringName, query));
+		}
+		if (repoName) {
+			result.push(this.generateRepo(repoName));
 		}
 		return result.join("\n\n");
 	}

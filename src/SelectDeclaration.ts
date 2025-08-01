@@ -12,20 +12,31 @@ import {
 	Source,
 	Sources,
 } from "./Sources";
-import { isParam, ParamAST, ParamMap } from "./ParamMap";
-import type { DatabaseDetails } from "./DatabaseDetails";
-import type { ResolvedType, FieldDetails } from "./Declaration";
+import {
+	ResolvedType,
+	FieldDetails,
+	Declaration,
+	ANON_COLUMN_NAME,
+} from "./Declaration";
+import { isParam, ParamAST } from "./ParamMap";
 import { Visitor } from "./Visitor";
+import type { DatabaseDetails } from "./DatabaseDetails";
+import type { ParsedQuery } from "./Parser";
 
-export class SelectDeclaration {
+export class SelectDeclaration implements Declaration {
 	private databaseDetails: DatabaseDetails;
+	private parsedQuery: ParsedQuery;
 	private ast: Select;
-	private paramMap: ParamMap;
 
-	constructor(databaseDetails: DatabaseDetails, ast: Select, paramMap: ParamMap) {
+	constructor(databaseDetails: DatabaseDetails, parsedQuery: ParsedQuery) {
 		this.databaseDetails = databaseDetails;
-		this.ast = ast;
-		this.paramMap = paramMap;
+		this.parsedQuery = parsedQuery;
+		// This type is asserted in `createDeclaration`
+		this.ast = parsedQuery.ast as Select;
+	}
+
+	getParsedQuery() {
+		return this.parsedQuery;
 	}
 
 	private resolveExprList(sources: Sources, expr: ExprList) {
@@ -129,6 +140,49 @@ export class SelectDeclaration {
 				return [this.resolveExprList(sources, expr as ExprList)];
 			case "column_ref":
 				return this.resolveColumnRef(sources, expr as ColumnRefItem);
+			case "number":
+				return [
+					{
+						name: ANON_COLUMN_NAME,
+						dataType: Number.isSafeInteger(expr.value)
+							? "integer"
+							: "double precision",
+						isNullable: false,
+					},
+				];
+			case "single_quote_string":
+				return [
+					{
+						name: ANON_COLUMN_NAME,
+						dataType: "text",
+						isNullable: false,
+					},
+				];
+			case "cast": {
+				const cast = expr as Cast;
+				const subexpr = this.resolveExpression(sources, cast.expr);
+				const dataType = cast.target[0]?.dataType?.toLowerCase();
+				if (!dataType) {
+					throw new Error("Can't resolve casted data type");
+				}
+				return [
+					{
+						// Casts can have an `as` field, but this isn't in the types
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						name: (cast as any).as ?? ANON_COLUMN_NAME,
+						dataType,
+						isNullable: subexpr[0]?.isNullable ?? true,
+					},
+				];
+			}
+			case "param":
+				return [
+					{
+						name: ANON_COLUMN_NAME,
+						dataType: "unknown",
+						isNullable: true,
+					},
+				];
 			default:
 				throw new Error("Unknown expression type: " + expr.type);
 		}
@@ -173,7 +227,7 @@ export class SelectDeclaration {
 
 		// First just make sure we find _all_ the parameters, but don't make
 		// any attempt at typechecking
-		for (const paramName of this.paramMap.getParamArray()) {
+		for (const paramName of this.parsedQuery.paramMap.getParamArray()) {
 			params[paramName] = {
 				name: paramName,
 				dataType: "unknown",

@@ -88,4 +88,9 @@ describe("Parser", () => {
 		expect(query.paramMap.getParamName(1)).toBe("id");
 		expect(query.paramMap.getParamName(2)).toBe("title");
 	});
+	it("Parses the repo name", () => {
+		const queries = parseSql("-- @repo Test\n-- @name testQuery\nSELECT 1");
+		expect(queries.length).toBe(1);
+		expect(queries[0].repoName).toBe("Test");
+	});
 });

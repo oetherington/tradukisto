@@ -1,7 +1,8 @@
-import type { AST } from "node-sql-parser";
 import type { DatabaseDetails } from "./DatabaseDetails";
-import type { ParamMap } from "./ParamMap";
+import type { ParsedQuery } from "./Parser";
 import { SelectDeclaration } from "./SelectDeclaration";
+
+export const ANON_COLUMN_NAME = "?column?";
 
 export type FieldDetails = {
 	name: string;
@@ -12,18 +13,18 @@ export type FieldDetails = {
 export type ResolvedType = Record<string, FieldDetails>;
 
 export interface Declaration {
+	getParsedQuery(): ParsedQuery;
 	resolveResultType(): ResolvedType;
 	resolveParameterTypes(): ResolvedType;
 }
 
 export const createDeclaration = (
 	databaseDetails: DatabaseDetails,
-	ast: AST,
-	paramMap: ParamMap,
+	parsedQuery: ParsedQuery,
 ): Declaration | null => {
-	switch (ast.type) {
+	switch (parsedQuery.ast.type) {
 		case "select":
-			return new SelectDeclaration(databaseDetails, ast, paramMap);
+			return new SelectDeclaration(databaseDetails, parsedQuery);
 		default:
 			return null;
 	}
