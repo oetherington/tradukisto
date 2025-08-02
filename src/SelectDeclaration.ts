@@ -91,8 +91,8 @@ export class SelectDeclaration implements Declaration {
 			if (!sourceName) {
 				throw new Error("Missing source name");
 			}
-			// The librarry types say this case should never happen, but
-			// empirically is does...
+			// The library types say this case should never happen, but
+			// empirically it does...
 			if (typeof sourceName === "object") {
 				const sourceNameObject = sourceName as unknown as {
 					type: "default";
