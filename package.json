@@ -6,7 +6,10 @@
 	"bugs": {
 		"url": "https://github.com/oetherington/tradukisto/issues"
 	},
-	"repository": "github:oetherington/tradukisto",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/oetherington/tradukisto.git"
+	},
 	"license": "AGPL-3.0-or-later",
 	"author": {
 		"name": "Ollie Etherington",
@@ -14,7 +17,9 @@
 	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-	"bin": "dist/Cli.js",
+	"bin": {
+		"tradukisto": "dist/Cli.js"
+	},
 	"files": [
 		"/dist"
 	],
