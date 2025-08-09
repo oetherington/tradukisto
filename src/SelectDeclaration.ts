@@ -1,4 +1,5 @@
 import type {
+	Binary,
 	Cast,
 	Column,
 	ColumnRefItem,
@@ -21,7 +22,7 @@ import {
 } from "./Declaration";
 import { isParam, ParamAST } from "./ParamMap";
 import { Visitor } from "./Visitor";
-import { chunk } from "./Helpers";
+import { chunk, operatorTypes } from "./Helpers";
 import type { DatabaseDetails } from "./DatabaseDetails";
 import type { ParsedQuery } from "./Parser";
 
@@ -259,6 +260,18 @@ export class SelectDeclaration implements Declaration {
 						name: (cast as any).as ?? ANON_COLUMN_NAME,
 						dataType,
 						isNullable: subexpr[0]?.isNullable ?? true,
+					},
+				];
+			}
+			case "binary_expr": {
+				const bin = expr as Binary;
+				const left = this.resolveExpression(sources, bin.left);
+				const right = this.resolveExpression(sources, bin.right);
+				return [
+					{
+						name: ANON_COLUMN_NAME,
+						dataType: operatorTypes[bin.operator] ?? "unknown",
+						isNullable: left[0].isNullable || right[0].isNullable,
 					},
 				];
 			}

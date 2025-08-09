@@ -411,4 +411,22 @@ describe("SelectDeclaration", () => {
 			});
 		});
 	});
+
+	it("Can infer types numeric operations", () => {
+		const decl = createDeclaration(
+			{ tables: {}, routines: {} },
+			parseSingle("SELECT 1 + 2 - 3 * 4 / 5 % 6 AS value"),
+		);
+		expect(decl).not.toBeNull();
+		expect(decl).toBeInstanceOf(SelectDeclaration);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const resultType = decl!.resolveResultType();
+		expect(resultType).toStrictEqual({
+			value: {
+				name: "value",
+				dataType: "double precision",
+				isNullable: false,
+			},
+		});
+	});
 });
