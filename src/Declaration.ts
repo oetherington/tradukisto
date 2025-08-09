@@ -4,13 +4,23 @@ import { SelectDeclaration } from "./SelectDeclaration";
 
 export const ANON_COLUMN_NAME = "?column?";
 
+export type ResolvedType = Record<string, FieldDetails>;
+
+export type DataType = string | ResolvedType | ArrayWrapper;
+
+export class ArrayWrapper {
+	public value: DataType;
+
+	constructor(value: DataType) {
+		this.value = value;
+	}
+}
+
 export type FieldDetails = {
 	name: string;
-	dataType: string | Record<string, FieldDetails>;
+	dataType: DataType;
 	isNullable: boolean;
 };
-
-export type ResolvedType = Record<string, FieldDetails>;
 
 export interface Declaration {
 	getParsedQuery(): ParsedQuery;

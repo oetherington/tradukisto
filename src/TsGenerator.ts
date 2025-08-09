@@ -1,5 +1,7 @@
 import {
 	ANON_COLUMN_NAME,
+	ArrayWrapper,
+	type DataType,
 	type Declaration,
 	type FieldDetails,
 	type ResolvedType,
@@ -18,6 +20,7 @@ export class TsGenerator extends Generator {
 		date: "Date",
 		varchar: "string",
 		"double precision": "number",
+		float: "number",
 		inet: "string",
 		integer: "number",
 		interval: "number",
@@ -50,25 +53,40 @@ export class TsGenerator extends Generator {
 		this.declarations[name] = decl;
 	}
 
-	private generateSimpleType = (dataType: string): string => {
+	private generateSimpleType(dataType: string): string {
 		let suffix = "";
 		if (dataType.endsWith("[]")) {
 			dataType = dataType.slice(0, dataType.length - 2);
 			suffix = "[]";
 		}
 		return (TsGenerator.dataTypes[dataType] ?? "unknown") + suffix;
-	};
+	}
 
-	private fieldDetailsToTSType = (
+	private generateArrayWrapperType(
+		dataType: ArrayWrapper,
+		indent: number,
+	): string {
+		const value = this.generateBaseType(dataType.value, indent);
+		return value + "[]";
+	}
+
+	private generateBaseType(dataType: DataType, indent: number) {
+		if (typeof dataType === "string") {
+			return this.generateSimpleType(dataType);
+		}
+		if (dataType instanceof ArrayWrapper) {
+			return this.generateArrayWrapperType(dataType, indent);
+		}
+		return this.generateFieldDetailsRecord(dataType, indent + 2);
+	}
+
+	private fieldDetailsToTSType(
 		{ dataType, isNullable }: FieldDetails,
 		indent: number,
-	) => {
-		const base =
-			typeof dataType === "string"
-				? this.generateSimpleType(dataType)
-				: this.generateFieldDetailsRecord(dataType, indent + 2);
+	) {
+		const base = this.generateBaseType(dataType, indent);
 		return isNullable ? base + " | null" : base;
-	};
+	}
 
 	private fieldDetailsToTS(details: FieldDetails, indent: number) {
 		if (details.name === ANON_COLUMN_NAME) {

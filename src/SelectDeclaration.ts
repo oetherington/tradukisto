@@ -1,4 +1,5 @@
 import type {
+	AggrFunc,
 	Binary,
 	Cast,
 	Column,
@@ -22,7 +23,7 @@ import {
 } from "./Declaration";
 import { isParam, ParamAST } from "./ParamMap";
 import { Visitor } from "./Visitor";
-import { chunk, operatorTypes } from "./Helpers";
+import { aggregates, chunk, operatorTypes } from "./Helpers";
 import type { DatabaseDetails } from "./DatabaseDetails";
 import type { ParsedQuery } from "./Parser";
 
@@ -214,7 +215,26 @@ export class SelectDeclaration implements Declaration {
 			{
 				name,
 				dataType: "unknown",
-				isNullable: true,
+				isNullable: false,
+			},
+		];
+	}
+
+	private resolveAggregateExpression(
+		sources: Sources,
+		expr: AggrFunc,
+	): FieldDetails[] {
+		const name = expr.name.toLowerCase();
+		if (name in aggregates) {
+			const handler = aggregates[name];
+			const arg = this.resolveExpression(sources, expr.args.expr);
+			return [handler(arg[0])];
+		}
+		return [
+			{
+				name,
+				dataType: "unknown",
+				isNullable: false,
 			},
 		];
 	}
@@ -277,6 +297,8 @@ export class SelectDeclaration implements Declaration {
 			}
 			case "function":
 				return this.resolveFunctionExpression(sources, expr as Function);
+			case "aggr_func":
+				return this.resolveAggregateExpression(sources, expr as AggrFunc);
 			case "param":
 				return [
 					{

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	ArrayWrapper,
 	createDeclaration,
 	parseSql,
 	ResolvedType,
@@ -409,6 +410,36 @@ describe("SelectDeclaration", () => {
 					isNullable: false,
 				},
 			});
+		});
+	});
+
+	it("Can infer types of aggregations", () => {
+		const decl = createDeclaration(
+			{
+				tables: {
+					users: {
+						id: {
+							tableName: "users",
+							columnName: "id",
+							dataType: "text",
+							isNullable: false,
+						},
+					},
+				},
+				routines: {},
+			},
+			parseSingle("SELECT ARRAY_AGG(id) value FROM users"),
+		);
+		expect(decl).not.toBeNull();
+		expect(decl).toBeInstanceOf(SelectDeclaration);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const resultType = decl!.resolveResultType();
+		expect(resultType).toStrictEqual({
+			value: {
+				name: "value",
+				dataType: new ArrayWrapper("text"),
+				isNullable: false,
+			},
 		});
 	});
 
