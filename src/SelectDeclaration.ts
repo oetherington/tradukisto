@@ -359,7 +359,7 @@ export class SelectDeclaration implements Declaration {
 					currentType.dataType !== dataType &&
 					currentType.dataType !== "unknown"
 				) {
-					throw new Error(`Conflicting types for :${paramName}`);
+					throw new Error(`Conflicting types for: ${paramName}`);
 				}
 				params[paramName] = {
 					name: paramName,
