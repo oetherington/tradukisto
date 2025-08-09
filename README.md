@@ -41,7 +41,7 @@ the output. The repo name should start with an upper-case letter A-Z, followed
 by 0 or more upper- or lower-case letters, numbers, or underscores:
 
 ```sql
-@repo MyRepo
+-- @repo UsersRepo
 ```
 
 All SQL queries must be named by a `@query` declaration. The query name should
