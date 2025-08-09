@@ -324,4 +324,53 @@ describe("SelectDeclaration", () => {
 			});
 		}
 	});
+
+	describe("Can infer types of basic JSON functions", () => {
+		it("jsonb_build_object", () => {
+			const decl = createDeclaration(
+				{
+					users: {
+						id: {
+							tableName: "users",
+							columnName: "id",
+							dataType: "integer",
+							isNullable: false,
+						},
+						name: {
+							tableName: "users",
+							columnName: "name",
+							dataType: "text",
+							isNullable: false,
+						},
+					},
+				},
+				parseSingle(`
+					SELECT jsonb_build_object('id', u.id, 'name', u.name) user
+					FROM users u
+				`),
+			);
+			expect(decl).not.toBeNull();
+			expect(decl).toBeInstanceOf(SelectDeclaration);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const resultType = decl!.resolveResultType();
+			expect(resultType).toStrictEqual({
+				user: {
+					name: "user",
+					dataType: {
+						id: {
+							name: "id",
+							dataType: "integer",
+							isNullable: false,
+						},
+						name: {
+							name: "name",
+							dataType: "text",
+							isNullable: false,
+						},
+					},
+					isNullable: false,
+				},
+			});
+		});
+	});
 });

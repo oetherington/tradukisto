@@ -4,6 +4,7 @@ import type {
 	ColumnRefItem,
 	ExpressionValue,
 	ExprList,
+	Function,
 	Select,
 } from "node-sql-parser";
 import {
@@ -20,6 +21,7 @@ import {
 } from "./Declaration";
 import { isParam, ParamAST } from "./ParamMap";
 import { Visitor } from "./Visitor";
+import { chunk } from "./Helpers";
 import type { DatabaseDetails } from "./DatabaseDetails";
 import type { ParsedQuery } from "./Parser";
 
@@ -131,6 +133,76 @@ export class SelectDeclaration implements Declaration {
 		];
 	}
 
+	private resolveJsonBuildObject(
+		sources: Sources,
+		name: string,
+		argList?: ExprList,
+	): FieldDetails[] {
+		const args = argList?.value ?? [];
+		if (!args.length) {
+			return [
+				{
+					name,
+					dataType: {},
+					isNullable: false,
+				},
+			];
+		}
+
+		const dataType: Record<string, FieldDetails> = {};
+
+		const entries = chunk(args, 2);
+		for (const entry of entries) {
+			if (entry.length !== 2) {
+				throw new Error("json_build_object expected even number of args");
+			}
+			const nameNode = entry[0];
+			if (nameNode.type !== "single_quote_string") {
+				return [
+					{
+						name,
+						dataType: "json",
+						isNullable: false,
+					},
+				];
+			}
+			const fieldName = nameNode.value;
+			const valueType = this.resolveExpression(sources, entry[1]);
+			if (valueType.length !== 1) {
+				throw new Error("json_build_object expected single value");
+			}
+			dataType[fieldName] = valueType[0];
+		}
+
+		return [
+			{
+				name,
+				dataType,
+				isNullable: false,
+			},
+		];
+	}
+
+	private resolveFunctionExpression(
+		sources: Sources,
+		expr: Function,
+	): FieldDetails[] {
+		const name = expr.name.name[0]?.value ?? "function";
+
+		if (name === "json_build_object" || name === "jsonb_build_object") {
+			return this.resolveJsonBuildObject(sources, name, expr.args);
+		}
+
+		// Anything else is unknown
+		return [
+			{
+				name,
+				dataType: "unknown",
+				isNullable: true,
+			},
+		];
+	}
+
 	private resolveExpression(
 		sources: Sources,
 		expr: ExpressionValue,
@@ -175,6 +247,8 @@ export class SelectDeclaration implements Declaration {
 					},
 				];
 			}
+			case "function":
+				return this.resolveFunctionExpression(sources, expr as Function);
 			case "param":
 				return [
 					{
