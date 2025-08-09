@@ -41,14 +41,17 @@ describe("SelectDeclaration", () => {
 				const testQuery = simpleFieldTestQueries[testName];
 				const decl = createDeclaration(
 					{
-						users: {
-							id: {
-								tableName: "users",
-								columnName: "id",
-								dataType: "text",
-								isNullable: false,
+						tables: {
+							users: {
+								id: {
+									tableName: "users",
+									columnName: "id",
+									dataType: "text",
+									isNullable: false,
+								},
 							},
 						},
+						routines: {},
 					},
 					parseSingle(testQuery),
 				);
@@ -70,28 +73,31 @@ describe("SelectDeclaration", () => {
 	it("Resolves unqualified star fields", () => {
 		const decl = createDeclaration(
 			{
-				users: {
-					id: {
-						tableName: "users",
-						columnName: "id",
-						dataType: "integer",
-						isNullable: false,
+				tables: {
+					users: {
+						id: {
+							tableName: "users",
+							columnName: "id",
+							dataType: "integer",
+							isNullable: false,
+						},
+						name: {
+							tableName: "users",
+							columnName: "name",
+							dataType: "text",
+							isNullable: false,
+						},
 					},
-					name: {
-						tableName: "users",
-						columnName: "name",
-						dataType: "text",
-						isNullable: false,
+					posts: {
+						userId: {
+							tableName: "posts",
+							columnName: "userId",
+							dataType: "integer",
+							isNullable: true,
+						},
 					},
 				},
-				posts: {
-					userId: {
-						tableName: "posts",
-						columnName: "userId",
-						dataType: "integer",
-						isNullable: true,
-					},
-				},
+				routines: {},
 			},
 			parseSingle("SELECT * FROM users JOIN posts"),
 		);
@@ -121,28 +127,31 @@ describe("SelectDeclaration", () => {
 	it("Resolves qualified star fields", () => {
 		const decl = createDeclaration(
 			{
-				users: {
-					id: {
-						tableName: "users",
-						columnName: "id",
-						dataType: "integer",
-						isNullable: false,
+				tables: {
+					users: {
+						id: {
+							tableName: "users",
+							columnName: "id",
+							dataType: "integer",
+							isNullable: false,
+						},
+						name: {
+							tableName: "users",
+							columnName: "name",
+							dataType: "text",
+							isNullable: false,
+						},
 					},
-					name: {
-						tableName: "users",
-						columnName: "name",
-						dataType: "text",
-						isNullable: false,
+					posts: {
+						userId: {
+							tableName: "posts",
+							columnName: "userId",
+							dataType: "integer",
+							isNullable: true,
+						},
 					},
 				},
-				posts: {
-					userId: {
-						tableName: "posts",
-						columnName: "userId",
-						dataType: "integer",
-						isNullable: true,
-					},
-				},
+				routines: {},
 			},
 			parseSingle("SELECT users.* FROM users JOIN posts"),
 		);
@@ -167,28 +176,31 @@ describe("SelectDeclaration", () => {
 	it("Star fields disallow conflicts", () => {
 		const decl = createDeclaration(
 			{
-				users: {
-					id: {
-						tableName: "users",
-						columnName: "id",
-						dataType: "integer",
-						isNullable: false,
+				tables: {
+					users: {
+						id: {
+							tableName: "users",
+							columnName: "id",
+							dataType: "integer",
+							isNullable: false,
+						},
+						name: {
+							tableName: "users",
+							columnName: "name",
+							dataType: "text",
+							isNullable: false,
+						},
 					},
-					name: {
-						tableName: "users",
-						columnName: "name",
-						dataType: "text",
-						isNullable: false,
+					posts: {
+						id: {
+							tableName: "posts",
+							columnName: "id",
+							dataType: "integer",
+							isNullable: true,
+						},
 					},
 				},
-				posts: {
-					id: {
-						tableName: "posts",
-						columnName: "id",
-						dataType: "integer",
-						isNullable: true,
-					},
-				},
+				routines: {},
 			},
 			parseSingle("SELECT * FROM users JOIN posts"),
 		);
@@ -235,14 +247,17 @@ describe("SelectDeclaration", () => {
 			it(testName, () => {
 				const decl = createDeclaration(
 					{
-						users: {
-							id: {
-								tableName: "users",
-								columnName: "id",
-								dataType: "text",
-								isNullable: false,
+						tables: {
+							users: {
+								id: {
+									tableName: "users",
+									columnName: "id",
+									dataType: "text",
+									isNullable: false,
+								},
 							},
 						},
+						routines: {},
 					},
 					parseSingle(query),
 				);
@@ -257,14 +272,17 @@ describe("SelectDeclaration", () => {
 		it("Disallows conflicting casts", () => {
 			const decl = createDeclaration(
 				{
-					users: {
-						id: {
-							tableName: "users",
-							columnName: "id",
-							dataType: "text",
-							isNullable: false,
+					tables: {
+						users: {
+							id: {
+								tableName: "users",
+								columnName: "id",
+								dataType: "text",
+								isNullable: false,
+							},
 						},
 					},
+					routines: {},
 				},
 				parseSingle(
 					"SELECT *, :value::TEXT FROM users WHERE :value::BOOLEAN",
@@ -305,11 +323,28 @@ describe("SelectDeclaration", () => {
 				expectedDataType: "unknown",
 				isNullable: true,
 			},
+			"Function calls": {
+				query: "SELECT PI() AS value",
+				expectedDataType: "double precision",
+				isNullable: true,
+			},
 		};
 		for (const testName in expressionTestCases) {
 			it(testName, () => {
 				const testCase = expressionTestCases[testName];
-				const decl = createDeclaration({}, parseSingle(testCase.query));
+				const database = {
+					tables: {},
+					routines: {
+						pi: {
+							name: "pi",
+							dataType: "double precision",
+						},
+					},
+				};
+				const decl = createDeclaration(
+					database,
+					parseSingle(testCase.query),
+				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -329,20 +364,23 @@ describe("SelectDeclaration", () => {
 		it("jsonb_build_object", () => {
 			const decl = createDeclaration(
 				{
-					users: {
-						id: {
-							tableName: "users",
-							columnName: "id",
-							dataType: "integer",
-							isNullable: false,
-						},
-						name: {
-							tableName: "users",
-							columnName: "name",
-							dataType: "text",
-							isNullable: false,
+					tables: {
+						users: {
+							id: {
+								tableName: "users",
+								columnName: "id",
+								dataType: "integer",
+								isNullable: false,
+							},
+							name: {
+								tableName: "users",
+								columnName: "name",
+								dataType: "text",
+								isNullable: false,
+							},
 						},
 					},
+					routines: {},
 				},
 				parseSingle(`
 					SELECT jsonb_build_object('id', u.id, 'name', u.name) user

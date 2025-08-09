@@ -188,9 +188,24 @@ export class SelectDeclaration implements Declaration {
 		expr: Function,
 	): FieldDetails[] {
 		const name = expr.name.name[0]?.value ?? "function";
+		const nameLower = name.toLowerCase();
 
-		if (name === "json_build_object" || name === "jsonb_build_object") {
+		if (
+			nameLower === "json_build_object" ||
+			nameLower === "jsonb_build_object"
+		) {
 			return this.resolveJsonBuildObject(sources, name, expr.args);
+		}
+
+		const routine = this.databaseDetails.routines[nameLower];
+		if (routine) {
+			return [
+				{
+					name,
+					dataType: routine.dataType,
+					isNullable: true,
+				},
+			];
 		}
 
 		// Anything else is unknown

@@ -137,6 +137,7 @@ describe("TsGenerator", () => {
 		);
 	});
 	it("Generates repo", () => {
+		const database = { tables: {}, routines: {} };
 		const queries = parseSql(`
 			-- @repo Test
 			-- @query testQuery1
@@ -145,7 +146,7 @@ describe("TsGenerator", () => {
 			SELECT :id::TEXT AS value;
 		`);
 		const decls = queries
-			.map((query) => createDeclaration({}, query))
+			.map((query) => createDeclaration(database, query))
 			.filter(Boolean) as Declaration[];
 		const generator = new TsGenerator();
 		for (const decl of decls) {

@@ -18,7 +18,7 @@ export const databaseDetailsToSources = (
 	} else if (Array.isArray(sources)) {
 		for (const source of sources) {
 			if ("table" in source) {
-				const table = details[source.table];
+				const table = details.tables[source.table];
 				const isNullable = "join" in source && source.join !== "INNER JOIN";
 				if (table) {
 					result[source.table] = { table, isNullable };
