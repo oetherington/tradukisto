@@ -460,4 +460,34 @@ describe("SelectDeclaration", () => {
 			},
 		});
 	});
+
+	it("Infers that limit param should be an integer", () => {
+		const decl = createDeclaration(
+			{
+				tables: {
+					users: {
+						id: {
+							tableName: "users",
+							columnName: "id",
+							dataType: "integer",
+							isNullable: false,
+						},
+					},
+				},
+				routines: {},
+			},
+			parseSingle("SELECT * FROM users LIMIT :limit"),
+		);
+		expect(decl).not.toBeNull();
+		expect(decl).toBeInstanceOf(SelectDeclaration);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const params = decl!.resolveParameterTypes();
+		expect(params).toStrictEqual({
+			limit: {
+				name: "limit",
+				dataType: "integer",
+				isNullable: false,
+			},
+		});
+	});
 });

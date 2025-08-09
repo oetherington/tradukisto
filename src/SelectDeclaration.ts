@@ -359,6 +359,18 @@ export class SelectDeclaration implements Declaration {
 			};
 		}
 
+		// If a param if given as the limit then it must be an integer
+		// TODO: Handle more complex expressions here
+		const limitParam = this.ast.limit?.value?.[0];
+		if (limitParam?.type === "param") {
+			const limitParamName = limitParam.value as unknown as string;
+			params[limitParamName] = {
+				name: limitParamName,
+				dataType: "integer",
+				isNullable: false,
+			};
+		}
+
 		// Now fill in the types for any parameters with explicit casts
 		type CastedParam = Omit<Cast, "expr"> & { expr: ParamAST };
 		new Visitor<CastedParam>(
@@ -395,10 +407,6 @@ export class SelectDeclaration implements Declaration {
 		if (Object.values(params).every((value) => !!value)) {
 			return params;
 		}
-
-		// Finally add some special cases to try to figure out as many types as
-		// possible
-		// TODO
 
 		return params;
 	}
