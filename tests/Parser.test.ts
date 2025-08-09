@@ -99,10 +99,12 @@ describe("Parser", () => {
 			verified IS TRUE
 
 			-- @query testQuery
-			SELECT id FROM users WHERE myFilter()
+			SELECT id FROM users WHERE myFilter() AND deleted IS NOT TRUE
 		`);
 		expect(queries.length).toBe(1);
-		expect(queries[0].query).toBe("SELECT id FROM users WHERE verified IS TRUE");
+		expect(queries[0].query).toBe(
+			"SELECT id FROM users WHERE verified IS TRUE AND deleted IS NOT TRUE",
+		);
 	});
 	it("Parses and expands partials with one argument", () => {
 		const queries = parseSql(`
@@ -110,24 +112,24 @@ describe("Parser", () => {
 			table.verified IS TRUE
 
 			-- @query testQuery
-			SELECT id FROM users WHERE myFilter(users)
+			SELECT id FROM users WHERE myFilter(users) AND deleted IS NOT TRUE
 		`);
 		expect(queries.length).toBe(1);
 		expect(queries[0].query).toBe(
-			"SELECT id FROM users WHERE users.verified IS TRUE",
+			"SELECT id FROM users WHERE users.verified IS TRUE AND deleted IS NOT TRUE",
 		);
 	});
 	it("Parses and expands partials with multiple arguments", () => {
 		const queries = parseSql(`
-			-- @partial myFilter(table , value)
+			-- @partial myFilter(table, value)
 			table.verified IS value
 
 			-- @query testQuery
-			SELECT id FROM users WHERE myFilter(users, FALSE)
+			SELECT id FROM users WHERE myFilter(users, FALSE) AND deleted IS NOT TRUE
 		`);
 		expect(queries.length).toBe(1);
 		expect(queries[0].query).toBe(
-			"SELECT id FROM users WHERE users.verified IS FALSE",
+			"SELECT id FROM users WHERE users.verified IS FALSE AND deleted IS NOT TRUE",
 		);
 	});
 });

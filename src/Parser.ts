@@ -43,7 +43,7 @@ const parsePartials = (sqlQuery: string) => {
 		const args = Array.from(argsRaw.matchAll(argRegex))
 			.map(([argName]) => argName?.trim())
 			.filter(Boolean);
-		const regex = new RegExp(`${name}\\(([^,]+(?:,[^,]+)*[,]?)?\\)`, "gm");
+		const regex = new RegExp(`${name}\\(([^),]+(?:,[^),]+)*[,]?)?\\)`, "gm");
 		partials[name] = {
 			name,
 			args,
@@ -65,10 +65,12 @@ const expandPartials = (query: string, partials: Record<string, ParsedPartial>) 
 			}
 			const argText = match[1] ?? "";
 			const args = Array.from(argText.matchAll(argRegex))
-				.map(([argName]) => argName)
+				.map(([argName]) => argName?.trim())
 				.filter(Boolean);
 			if (args.length !== parsedPartial.args.length) {
-				throw new Error(`Incorrect arg count for partial ${partialName}`);
+				throw new Error(
+					`Partial ${partialName} expected ${parsedPartial.args.length} arguments, found ${args.length}`,
+				);
 			}
 			let expanded = parsedPartial.replacement;
 			for (let i = 0; i < args.length; i++) {
