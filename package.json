@@ -10,7 +10,7 @@
 	"license": "AGPL-3.0-or-later",
 	"author": {
 		"name": "Ollie Etherington",
-		"url": "https://github.com/oetherington"
+		"url": "https://www.etherington.xyz"
 	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
