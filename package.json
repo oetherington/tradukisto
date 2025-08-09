@@ -16,7 +16,6 @@
 	"types": "dist/index.d.ts",
 	"bin": "dist/Cli.js",
 	"files": [
-		"/src",
 		"/dist"
 	],
 	"scripts": {
