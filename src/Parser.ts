@@ -43,7 +43,7 @@ const parsePartials = (sqlQuery: string) => {
 		const args = Array.from(argsRaw.matchAll(argRegex))
 			.map(([argName]) => argName?.trim())
 			.filter(Boolean);
-		const regex = new RegExp(`${name}\\(([^),]+(?:,[^),]+)*[,]?)?\\)`, "gm");
+		const regex = new RegExp(`${name}\\(([^),]+(?:,[^),]+)*[,]?)?\\)`, "m");
 		partials[name] = {
 			name,
 			args,
@@ -57,8 +57,14 @@ const parsePartials = (sqlQuery: string) => {
 const expandPartials = (query: string, partials: Record<string, ParsedPartial>) => {
 	for (const partialName in partials) {
 		const parsedPartial = partials[partialName];
-		const matches = query.matchAll(parsedPartial.regex);
-		for (const match of matches) {
+		for (
+			let match = query.match(parsedPartial.regex);
+			match;
+			match = query.match(parsedPartial.regex)
+		) {
+			if (match.index === undefined) {
+				throw new Error("Invalid match");
+			}
 			const fullText = match[0];
 			if (!fullText?.length) {
 				throw new Error("Invalid partial match");

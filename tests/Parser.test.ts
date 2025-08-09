@@ -132,4 +132,17 @@ describe("Parser", () => {
 			"SELECT id FROM users WHERE users.verified IS FALSE AND deleted IS NOT TRUE",
 		);
 	});
+	it("Can expand partials multiple times", () => {
+		const queries = parseSql(`
+			-- @partial trueFilter(field)
+			field IS TRUE
+
+			-- @query testQuery
+			SELECT id FROM users WHERE trueFilter(verified) AND trueFilter(deleted)
+		`);
+		expect(queries.length).toBe(1);
+		expect(queries[0].query).toBe(
+			"SELECT id FROM users WHERE verified IS TRUE AND deleted IS TRUE",
+		);
+	});
 });
