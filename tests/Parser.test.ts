@@ -3,7 +3,7 @@ import { parseSql } from "../src";
 
 describe("Parser", () => {
 	it("parser single SQL statement into an AST array", () => {
-		const queries = parseSql("-- @name testQuery\nSELECT * FROM users");
+		const queries = parseSql("-- @query testQuery\nSELECT * FROM users");
 		expect(queries.length).toBe(1);
 		expect(queries[0].queryName).toBe("testQuery");
 		expect(queries[0].ast).toStrictEqual({
@@ -46,10 +46,10 @@ describe("Parser", () => {
 	});
 	it("Names multiple queries from comments", () => {
 		const queries = parseSql(`
-			-- @name myFirstQuery
+			-- @query myFirstQuery
 			SELECT * FROM users;
 
-			-- @name mySecondQuery
+			-- @query mySecondQuery
 			SELECT * FROM posts;
 		`);
 		expect(queries.length).toBe(2);
@@ -58,7 +58,7 @@ describe("Parser", () => {
 	});
 	it("Parses queries split over multiple lines", () => {
 		const queries = parseSql(`
-			-- @name testQuery
+			-- @query testQuery
 			SELECT
 				name
 			FROM
@@ -70,13 +70,13 @@ describe("Parser", () => {
 		expect(queries[0].queryName).toBe("testQuery");
 	});
 	it("Generates type name from query name", () => {
-		const queries = parseSql("-- @name testQuery\nSELECT * FROM users");
+		const queries = parseSql("-- @query testQuery\nSELECT * FROM users");
 		expect(queries.length).toBe(1);
 		expect(queries[0].queryName).toBe("testQuery");
 		expect(queries[0].typeName).toBe("ITestQuery");
 	});
 	it("Converts named params to numbered params", () => {
-		const queries = parseSql("-- @name testQuery\nSELECT :id, :title");
+		const queries = parseSql("-- @query testQuery\nSELECT :id, :title");
 		expect(queries.length).toBe(1);
 		const query = queries[0];
 		expect(query.query).toBe("SELECT $1, $2");
@@ -89,7 +89,7 @@ describe("Parser", () => {
 		expect(query.paramMap.getParamName(2)).toBe("title");
 	});
 	it("Parses the repo name", () => {
-		const queries = parseSql("-- @repo Test\n-- @name testQuery\nSELECT 1");
+		const queries = parseSql("-- @repo Test\n-- @query testQuery\nSELECT 1");
 		expect(queries.length).toBe(1);
 		expect(queries[0].repoName).toBe("Test");
 	});
@@ -98,7 +98,7 @@ describe("Parser", () => {
 			-- @partial myFilter()
 			verified IS TRUE
 
-			-- @name testQuery
+			-- @query testQuery
 			SELECT id FROM users WHERE myFilter()
 		`);
 		expect(queries.length).toBe(1);
@@ -109,7 +109,7 @@ describe("Parser", () => {
 			-- @partial myFilter(table)
 			table.verified IS TRUE
 
-			-- @name testQuery
+			-- @query testQuery
 			SELECT id FROM users WHERE myFilter(users)
 		`);
 		expect(queries.length).toBe(1);
@@ -122,7 +122,7 @@ describe("Parser", () => {
 			-- @partial myFilter(table , value)
 			table.verified IS value
 
-			-- @name testQuery
+			-- @query testQuery
 			SELECT id FROM users WHERE myFilter(users, FALSE)
 		`);
 		expect(queries.length).toBe(1);

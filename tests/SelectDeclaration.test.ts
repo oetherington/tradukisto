@@ -8,7 +8,7 @@ import {
 
 describe("SelectDeclaration", () => {
 	const parseSingle = (sql: string) => {
-		const queries = parseSql("-- @name testQuery\n" + sql);
+		const queries = parseSql("-- @query testQuery\n" + sql);
 		expect(queries.length).toBe(1);
 		return queries[0];
 	};

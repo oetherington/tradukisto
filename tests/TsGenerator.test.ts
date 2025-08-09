@@ -139,9 +139,9 @@ describe("TsGenerator", () => {
 	it("Generates repo", () => {
 		const queries = parseSql(`
 			-- @repo Test
-			-- @name testQuery1
+			-- @query testQuery1
 			SELECT 1 AS value;
-			-- @name testQuery2
+			-- @query testQuery2
 			SELECT :id::TEXT AS value;
 		`);
 		const decls = queries

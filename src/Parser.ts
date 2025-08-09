@@ -7,7 +7,7 @@ const partialRegex =
 	/--\s*@partial\s+([a-z][a-zA-Z0-9_]*)\(\s*([a-z][a-zA-Z0-9_]*(?:\s*,\s*[a-z][a-zA-Z0-9_]*)*)?\s*\)\s*\r?\n((?:(?!--\s*@)[\s\S])*)/gm;
 const argRegex = /[^,]+/g;
 const queryRegex =
-	/--\s*@name\s+([a-z][a-zA-Z0-9_]*)\s*\r?\n((?:(?!--\s*@).|\s)*)/gm;
+	/--\s*@query\s+([a-z][a-zA-Z0-9_]*)\s*\r?\n((?:(?!--\s*@).|\s)*)/gm;
 
 export type ParsedQuery = {
 	repoName?: string;
