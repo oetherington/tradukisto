@@ -93,4 +93,41 @@ describe("Parser", () => {
 		expect(queries.length).toBe(1);
 		expect(queries[0].repoName).toBe("Test");
 	});
+	it("Parses and expands partials with no arguments", () => {
+		const queries = parseSql(`
+			-- @partial myFilter()
+			verified IS TRUE
+
+			-- @name testQuery
+			SELECT id FROM users WHERE myFilter()
+		`);
+		expect(queries.length).toBe(1);
+		expect(queries[0].query).toBe("SELECT id FROM users WHERE verified IS TRUE");
+	});
+	it("Parses and expands partials with one argument", () => {
+		const queries = parseSql(`
+			-- @partial myFilter(table)
+			table.verified IS TRUE
+
+			-- @name testQuery
+			SELECT id FROM users WHERE myFilter(users)
+		`);
+		expect(queries.length).toBe(1);
+		expect(queries[0].query).toBe(
+			"SELECT id FROM users WHERE users.verified IS TRUE",
+		);
+	});
+	it("Parses and expands partials with multiple arguments", () => {
+		const queries = parseSql(`
+			-- @partial myFilter(table , value)
+			table.verified IS value
+
+			-- @name testQuery
+			SELECT id FROM users WHERE myFilter(users, FALSE)
+		`);
+		expect(queries.length).toBe(1);
+		expect(queries[0].query).toBe(
+			"SELECT id FROM users WHERE users.verified IS FALSE",
+		);
+	});
 });
