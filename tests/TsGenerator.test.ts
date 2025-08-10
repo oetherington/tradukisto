@@ -48,76 +48,111 @@ describe("TsGenerator", () => {
 		for (const ty in types) {
 			it(ty, () => {
 				const generator = new TsGenerator();
-				const result = generator.generateType("Test", {
-					value: {
-						name: "value",
-						dataType: ty,
-						isNullable: false,
+				const result = generator.generateType(
+					"Test",
+					{
+						value: {
+							name: "value",
+							dataType: ty,
+							isNullable: false,
+						},
 					},
-				});
+					false,
+				);
 				expect(result).toBe(
 					`export interface Test {\n  value: ${types[ty]},\n}`,
 				);
 			});
 		}
 	});
-	it("Generates nullable Typescript types", () => {
+	it("Generates nullable Typescript types (non-optional)", () => {
 		const generator = new TsGenerator();
-		const result = generator.generateType("Test", {
-			value: {
-				name: "value",
-				dataType: "text",
-				isNullable: true,
+		const result = generator.generateType(
+			"Test",
+			{
+				value: {
+					name: "value",
+					dataType: "text",
+					isNullable: true,
+				},
 			},
-		});
+			false,
+		);
 		expect(result).toBe("export interface Test {\n  value: string | null,\n}");
+	});
+	it("Generates nullable Typescript types (optional)", () => {
+		const generator = new TsGenerator();
+		const result = generator.generateType(
+			"Test",
+			{
+				value: {
+					name: "value",
+					dataType: "text",
+					isNullable: true,
+				},
+			},
+			true,
+		);
+		expect(result).toBe("export interface Test {\n  value?: string | null,\n}");
 	});
 	it("Generates array Typescript types", () => {
 		const generator = new TsGenerator();
-		const result = generator.generateType("Test", {
-			a: {
-				name: "a",
-				dataType: "text[]",
-				isNullable: false,
+		const result = generator.generateType(
+			"Test",
+			{
+				a: {
+					name: "a",
+					dataType: "text[]",
+					isNullable: false,
+				},
+				b: {
+					name: "b",
+					dataType: "integer[]",
+					isNullable: true,
+				},
 			},
-			b: {
-				name: "b",
-				dataType: "integer[]",
-				isNullable: true,
-			},
-		});
+			false,
+		);
 		expect(result).toBe(
 			"export interface Test {\n  a: string[],\n  b: number[] | null,\n}",
 		);
 	});
 	it("Generates nested typesript types", () => {
 		const generator = new TsGenerator();
-		const result = generator.generateType("Test", {
-			outer: {
-				name: "outer",
-				dataType: {
-					inner: {
-						name: "inner",
-						dataType: "text",
-						isNullable: false,
+		const result = generator.generateType(
+			"Test",
+			{
+				outer: {
+					name: "outer",
+					dataType: {
+						inner: {
+							name: "inner",
+							dataType: "text",
+							isNullable: false,
+						},
 					},
+					isNullable: true,
 				},
-				isNullable: true,
 			},
-		});
+			false,
+		);
 		expect(result).toBe(
 			"export interface Test {\n  outer: {\n    inner: string,\n  } | null,\n}",
 		);
 	});
 	it("Other types are `unkown`", () => {
 		const generator = new TsGenerator();
-		const result = generator.generateType("Test", {
-			a: {
-				name: "a",
-				dataType: "someothertype",
-				isNullable: false,
+		const result = generator.generateType(
+			"Test",
+			{
+				a: {
+					name: "a",
+					dataType: "someothertype",
+					isNullable: false,
+				},
 			},
-		});
+			false,
+		);
 		expect(result).toBe("export interface Test {\n  a: unknown,\n}");
 	});
 	it("Doesn't allow duplicate declaration names", () => {
@@ -143,7 +178,7 @@ describe("TsGenerator", () => {
 			-- @query testQuery1
 			SELECT 1 AS value;
 			-- @query testQuery2
-			SELECT :id::TEXT AS value;
+			SELECT :id::TEXT AS value, :name AS value2;
 		`);
 		const decls = queries
 			.map((query) => createDeclaration(database, query))
@@ -165,7 +200,10 @@ export class TestRepo {
   }
 
   testQuery2(params: ITestQuery2Params): Promise<ITestQuery2[]> {
-    return this.client.fetchRows(testQuery2Sql, [params.id]);
+    return this.client.fetchRows(testQuery2Sql, [
+      params.id === undefined ? null : params.id,
+      params.name === undefined ? null : params.name,
+    ]);
   }
 }`);
 	});

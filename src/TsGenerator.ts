@@ -65,48 +65,78 @@ export class TsGenerator extends Generator {
 	private generateArrayWrapperType(
 		dataType: ArrayWrapper,
 		indent: number,
+		nullablesAreOptional: boolean,
 	): string {
-		const value = this.generateBaseType(dataType.value, indent);
+		const value = this.generateBaseType(
+			dataType.value,
+			indent,
+			nullablesAreOptional,
+		);
 		return value + "[]";
 	}
 
-	private generateBaseType(dataType: DataType, indent: number) {
+	private generateBaseType(
+		dataType: DataType,
+		indent: number,
+		nullablesAreOptional: boolean,
+	) {
 		if (typeof dataType === "string") {
 			return this.generateSimpleType(dataType);
 		}
 		if (dataType instanceof ArrayWrapper) {
-			return this.generateArrayWrapperType(dataType, indent);
+			return this.generateArrayWrapperType(
+				dataType,
+				indent,
+				nullablesAreOptional,
+			);
 		}
-		return this.generateFieldDetailsRecord(dataType, indent + 2);
+		return this.generateFieldDetailsRecord(
+			dataType,
+			indent + 2,
+			nullablesAreOptional,
+		);
 	}
 
 	private fieldDetailsToTSType(
 		{ dataType, isNullable }: FieldDetails,
 		indent: number,
+		nullablesAreOptional: boolean,
 	) {
-		const base = this.generateBaseType(dataType, indent);
+		const base = this.generateBaseType(dataType, indent, nullablesAreOptional);
 		return isNullable ? base + " | null" : base;
 	}
 
-	private fieldDetailsToTS(details: FieldDetails, indent: number) {
+	private fieldDetailsToTS(
+		details: FieldDetails,
+		indent: number,
+		nullablesAreOptional: boolean,
+	) {
 		if (details.name === ANON_COLUMN_NAME) {
 			throw new Error("You must name all anonymous columns");
 		}
-		return `${details.name}: ${this.fieldDetailsToTSType(details, indent)},`;
+		const optional = nullablesAreOptional && details.isNullable ? "?" : "";
+		const ty = this.fieldDetailsToTSType(details, indent, nullablesAreOptional);
+		return `${details.name}${optional}: ${ty},`;
 	}
 
-	private generateFieldDetailsRecord(value: ResolvedType, indent: number) {
+	private generateFieldDetailsRecord(
+		value: ResolvedType,
+		indent: number,
+		nullablesAreOptional: boolean,
+	) {
 		const lines = [`{`];
 		const spaces = " ".repeat(indent + 2);
 		for (const details of Object.values(value)) {
-			lines.push(spaces + this.fieldDetailsToTS(details, indent));
+			const ty = this.fieldDetailsToTS(details, indent, nullablesAreOptional);
+			lines.push(spaces + ty);
 		}
 		lines.push(" ".repeat(indent) + "}");
 		return lines.join("\n");
 	}
 
-	generateType(name: string, value: ResolvedType) {
-		return `export interface ${name} ${this.generateFieldDetailsRecord(value, 0)}`;
+	generateType(name: string, value: ResolvedType, nullablesAreOptional: boolean) {
+		const ty = this.generateFieldDetailsRecord(value, 0, nullablesAreOptional);
+		return `export interface ${name} ${ty}`;
 	}
 
 	private generateSqlString(
@@ -138,8 +168,13 @@ export class TsGenerator extends Generator {
 		}
 		const namedArgs = `params: ${this.typeNameToParamsName(typeName)}`;
 		const paramArray = paramMap.getParamArray();
-		const positionalArgs = paramArray.map((item) => `params.${item}`).join(", ");
-		return [namedArgs, `, [${positionalArgs}]`];
+		const positionalArgs = paramArray
+			.map(
+				(item) =>
+					`      params.${item} === undefined ? null : params.${item},`,
+			)
+			.join("\n");
+		return [namedArgs, `, [\n${positionalArgs}\n    ]`];
 	}
 
 	private generateRepoMethod(decl: Declaration) {
@@ -178,10 +213,12 @@ export class TsGenerator extends Generator {
 			const resultType = decl.resolveResultType();
 			const parameterTypes = decl.resolveParameterTypes();
 			if (Object.keys(resultType).length) {
-				result.push(this.generateType(typeName, resultType));
+				const ty = this.generateType(typeName, resultType, false);
+				result.push(ty);
 			}
 			if (Object.keys(parameterTypes).length) {
-				result.push(this.generateType(paramTypeName, parameterTypes));
+				const ty = this.generateType(paramTypeName, parameterTypes, true);
+				result.push(ty);
 			}
 			result.push(this.generateSqlString(repoName, queryName, query));
 		}
