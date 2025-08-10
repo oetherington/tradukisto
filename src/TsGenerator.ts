@@ -109,10 +109,15 @@ export class TsGenerator extends Generator {
 		return `export interface ${name} ${this.generateFieldDetailsRecord(value, 0)}`;
 	}
 
-	private generateSqlString(name: string, sql: string) {
-		const comment = `-- ${name}\n`;
+	private generateSqlString(
+		repoName: string | undefined,
+		queryName: string,
+		sql: string,
+	) {
+		const sqlStringName = this.queryNameToSqlName(queryName);
+		const comment = `-- ${repoName ? `${repoName}.` : ""}${queryName}\n`;
 		const escapedSql = sql.replaceAll("`", "\\`");
-		return `export const ${name} = \`${comment}${escapedSql}\`;`;
+		return `export const ${sqlStringName} = \`${comment}${escapedSql}\`;`;
 	}
 
 	private generateImports(repoName?: string): string[] {
@@ -170,7 +175,6 @@ export class TsGenerator extends Generator {
 			const decl = this.declarations[declName];
 			const { queryName, typeName, query } = decl.getParsedQuery();
 			const paramTypeName = this.typeNameToParamsName(typeName);
-			const sqlStringName = this.queryNameToSqlName(queryName);
 			const resultType = decl.resolveResultType();
 			const parameterTypes = decl.resolveParameterTypes();
 			if (Object.keys(resultType).length) {
@@ -179,7 +183,7 @@ export class TsGenerator extends Generator {
 			if (Object.keys(parameterTypes).length) {
 				result.push(this.generateType(paramTypeName, parameterTypes));
 			}
-			result.push(this.generateSqlString(sqlStringName, query));
+			result.push(this.generateSqlString(repoName, queryName, query));
 		}
 		if (repoName) {
 			result.push(this.generateRepo(repoName));

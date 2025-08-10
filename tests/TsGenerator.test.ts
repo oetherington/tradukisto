@@ -133,7 +133,7 @@ describe("TsGenerator", () => {
 		const generator = new TsGenerator();
 		generator.addDeclaration(decl.getParsedQuery().queryName, decl);
 		expect(generator.toString()).toBe(
-			"export const testQuerySql = `-- testQuerySql\nSELECT 1`;",
+			"export const testQuerySql = `-- testQuery\nSELECT 1`;",
 		);
 	});
 	it("Generates repo", () => {
