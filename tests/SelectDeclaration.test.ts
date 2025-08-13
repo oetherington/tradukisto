@@ -490,4 +490,23 @@ describe("SelectDeclaration", () => {
 			},
 		});
 	});
+
+	it("Detects single return value", () => {
+		const nonSingleDecl = createDeclaration(
+			{ tables: {}, routines: {} },
+			parseSingle("SELECT 1"),
+		);
+		expect(nonSingleDecl).not.toBeNull();
+		expect(nonSingleDecl).toBeInstanceOf(SelectDeclaration);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		expect(nonSingleDecl!.isSingleRow()).toBe(false);
+		const singleDecl = createDeclaration(
+			{ tables: {}, routines: {} },
+			parseSingle("SELECT 1 LIMIT 1"),
+		);
+		expect(singleDecl).not.toBeNull();
+		expect(singleDecl).toBeInstanceOf(SelectDeclaration);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		expect(singleDecl!.isSingleRow()).toBe(true);
+	});
 });

@@ -32,6 +32,10 @@ class MockDeclaration implements Declaration {
 	resolveParameterTypes() {
 		return this.parameterTypes;
 	}
+
+	isSingleRow() {
+		return false;
+	}
 }
 
 describe("TsGenerator", () => {
@@ -171,7 +175,7 @@ describe("TsGenerator", () => {
 			"export const testQuerySql = `-- testQuery\nSELECT 1`;",
 		);
 	});
-	it("Generates repo", () => {
+	it("Generates repo with various methods", () => {
 		const database = { tables: {}, routines: {} };
 		const queries = parseSql(`
 			-- @repo Test
@@ -179,6 +183,8 @@ describe("TsGenerator", () => {
 			SELECT 1 AS value;
 			-- @query testQuery2
 			SELECT :id::TEXT AS value, :name AS value2;
+			-- @query testQuery3
+			SELECT 3 AS value LIMIT 1;
 		`);
 		const decls = queries
 			.map((query) => createDeclaration(database, query))
@@ -195,15 +201,22 @@ export class TestRepo {
     this.client = client;
   }
 
-  testQuery1(): Promise<ITestQuery1[]> {
-    return this.client.fetchRows(testQuery1Sql);
+  async testQuery1(): Promise<ITestQuery1[]> {
+    const res = await this.client.fetchRows(testQuery1Sql);
+    return res;
   }
 
-  testQuery2(params: ITestQuery2Params): Promise<ITestQuery2[]> {
-    return this.client.fetchRows(testQuery2Sql, [
+  async testQuery2(params: ITestQuery2Params): Promise<ITestQuery2[]> {
+    const res = await this.client.fetchRows(testQuery2Sql, [
       params.id === undefined ? null : params.id,
       params.name === undefined ? null : params.name,
     ]);
+    return res;
+  }
+
+  async testQuery3(): Promise<ITestQuery3 | null> {
+    const res = await this.client.fetchRows(testQuery3Sql);
+    return res?.[0] ?? null;
   }
 }`);
 	});

@@ -410,4 +410,8 @@ export class SelectDeclaration implements Declaration {
 
 		return params;
 	}
+
+	isSingleRow() {
+		return this.ast.limit?.value?.[0]?.value === 1;
+	}
 }

@@ -26,6 +26,7 @@ export interface Declaration {
 	getParsedQuery(): ParsedQuery;
 	resolveResultType(): ResolvedType;
 	resolveParameterTypes(): ResolvedType;
+	isSingleRow(): boolean;
 }
 
 export const createDeclaration = (
