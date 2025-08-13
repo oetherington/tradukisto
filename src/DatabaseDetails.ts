@@ -24,15 +24,19 @@ export const fetchColumnDetails = (
 ): Promise<ColumnDetails[]> =>
 	client.fetchRows<ColumnDetails>(`
 		SELECT
-			c.table_name AS "tableName",
-			c.column_name AS "columnName",
-			c.udt_name::REGTYPE AS "dataType",
-			c.is_nullable = 'YES' AS "isNullable"
-		FROM information_schema.COLUMNS c
-		INNER JOIN information_schema.TABLES t ON
-			t.table_name = c.table_name AND
-			t.table_type = 'BASE TABLE'
-		WHERE c.table_schema = 'public'
+			c.relname AS "tableName",
+			a.attname AS "columnName",
+			FORMAT_TYPE(a.atttypid, NULL) AS "dataType",
+			NOT a.attnotnull AS "isNullable"
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON a.attrelid = c.oid
+		INNER JOIN pg_namespace n ON c.relnamespace = n.oid
+		WHERE
+			NOT a.attisdropped
+			AND a.attnum > 0
+			AND c.relkind IN ('r', 'v', 'm')
+			AND n.nspname = 'public'
+		ORDER BY c.relname, a.attnum
 	`);
 
 export const fetchRoutineDetails = (client: PostgresClient) =>
