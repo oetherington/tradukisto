@@ -76,6 +76,14 @@ JOIN user_confirmations uc ON u.id = uc.user_id
 WHERE verifiedUsersFilter(u, uc)
 ```
 
+You can include other SQL files with `@include` which takes a relative path.
+Note that this only includes partials into the current file, not queries or repo
+declarations:
+
+```sql
+-- @include ../helpers.sql
+```
+
 ## License
 
 Tradukisto is free software under the GNU AGPLv3. See the LICENSE file for
