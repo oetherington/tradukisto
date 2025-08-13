@@ -20,9 +20,8 @@ import {
 	FieldDetails,
 	Declaration,
 	ANON_COLUMN_NAME,
+	inferParameterTypes,
 } from "./Declaration";
-import { isParam, ParamAST } from "./ParamMap";
-import { Visitor } from "./Visitor";
 import { aggregates, chunk, operatorTypes } from "./Helpers";
 import type { DatabaseDetails } from "./DatabaseDetails";
 import type { ParsedQuery } from "./Parser";
@@ -35,8 +34,11 @@ export class SelectDeclaration implements Declaration {
 	constructor(databaseDetails: DatabaseDetails, parsedQuery: ParsedQuery) {
 		this.databaseDetails = databaseDetails;
 		this.parsedQuery = parsedQuery;
-		// This type is asserted in `createDeclaration`
-		this.ast = parsedQuery.ast as Select;
+		if (parsedQuery.ast.type === "select") {
+			this.ast = parsedQuery.ast;
+		} else {
+			throw new Error("Invalid select AST");
+		}
 	}
 
 	getParsedQuery() {
@@ -347,68 +349,11 @@ export class SelectDeclaration implements Declaration {
 	}
 
 	resolveParameterTypes(): ResolvedType {
-		const params: ResolvedType = {};
-
-		// First just make sure we find _all_ the parameters, but don't make
-		// any attempt at typechecking
-		for (const paramName of this.parsedQuery.paramMap.getParamArray()) {
-			params[paramName] = {
-				name: paramName,
-				dataType: "unknown",
-				isNullable: true,
-			};
-		}
-
-		// If a param if given as the limit then it must be an integer
-		// TODO: Handle more complex expressions here
-		const limitParam = this.ast.limit?.value?.[0];
-		if (limitParam?.type === "param") {
-			const limitParamName = limitParam.value as unknown as string;
-			params[limitParamName] = {
-				name: limitParamName,
-				dataType: "integer",
-				isNullable: false,
-			};
-		}
-
-		// Now fill in the types for any parameters with explicit casts
-		type CastedParam = Omit<Cast, "expr"> & { expr: ParamAST };
-		new Visitor<CastedParam>(
-			(value): value is CastedParam =>
-				!!value &&
-				typeof value === "object" &&
-				"type" in value &&
-				value.type === "cast" &&
-				"expr" in value &&
-				isParam(value.expr),
-			(value) => {
-				const paramName = value.expr.value;
-				const dataType = value.target[0]?.dataType?.toLowerCase();
-				if (!paramName || !dataType) {
-					throw new Error("Invalid cast expression");
-				}
-				const currentType = params[paramName];
-				if (
-					currentType &&
-					currentType.dataType !== dataType &&
-					currentType.dataType !== "unknown"
-				) {
-					throw new Error(`Conflicting types for: ${paramName}`);
-				}
-				params[paramName] = {
-					name: paramName,
-					dataType,
-					isNullable: true,
-				};
-			},
-		).visit(this.ast);
-
-		// If everything was explicitely casted then we're done
-		if (Object.values(params).every((value) => !!value)) {
-			return params;
-		}
-
-		return params;
+		return inferParameterTypes(
+			this.parsedQuery.paramMap,
+			this.ast,
+			this.ast.limit,
+		);
 	}
 
 	isSingleRow() {
