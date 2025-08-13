@@ -27,8 +27,8 @@ export class TsGenerator extends Generator {
 		inet: "string",
 		integer: "number",
 		interval: "number",
-		json: "any", // TODO
-		jsonb: "any", // TODO
+		json: "Json",
+		jsonb: "Json",
 		money: "number",
 		real: "number",
 		smallint: "number",
@@ -48,6 +48,7 @@ export class TsGenerator extends Generator {
 	};
 
 	private declarations: Record<string, Declaration> = {};
+	private hasJson = false;
 
 	addDeclaration(name: string, decl: Declaration) {
 		if (this.declarations[name]) {
@@ -61,6 +62,9 @@ export class TsGenerator extends Generator {
 		if (dataType.endsWith("[]")) {
 			dataType = dataType.slice(0, dataType.length - 2);
 			suffix = "[]";
+		}
+		if (dataType.startsWith("json")) {
+			this.hasJson = true;
 		}
 		return (TsGenerator.dataTypes[dataType] ?? "unknown") + suffix;
 	}
@@ -154,7 +158,16 @@ export class TsGenerator extends Generator {
 	}
 
 	private generateImports(repoName?: string): string[] {
-		return repoName ? ['import type { PostgresClient } from "tradukisto";'] : [];
+		const imports = [];
+		if (this.hasJson) {
+			imports.push("Json");
+		}
+		if (repoName) {
+			imports.push("PostgresClient");
+		}
+		return imports.length
+			? [`import type { ${imports.join(", ")} } from "tradukisto";`]
+			: [];
 	}
 
 	private queryNameToSqlName(queryName: string) {
@@ -212,8 +225,7 @@ export class TsGenerator extends Generator {
 	}
 
 	toString(repoName?: string): string {
-		const result = [TsGenerator.header];
-		result.push(...this.generateImports(repoName));
+		const result: string[] = [];
 		for (const declName in this.declarations) {
 			const decl = this.declarations[declName];
 			const { queryName, typeName, query } = decl.getParsedQuery();
@@ -233,6 +245,10 @@ export class TsGenerator extends Generator {
 		if (repoName) {
 			result.push(this.generateRepo(repoName));
 		}
-		return result.join("\n\n");
+		return [
+			TsGenerator.header,
+			...this.generateImports(repoName),
+			...result,
+		].join("\n\n");
 	}
 }

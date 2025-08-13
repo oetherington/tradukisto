@@ -47,7 +47,8 @@ describe("TsGenerator", () => {
 			integer: "number",
 			"double precision": "number",
 			boolean: "boolean",
-			jsonb: "any", // TODO
+			json: "Json",
+			jsonb: "Json",
 			"timestamp with time zone": "Date",
 		};
 		for (const ty in types) {
@@ -230,5 +231,20 @@ export class TestRepo {
     return res?.[0] ?? null;
   }
 }`);
+	});
+	it("Imports `Json` when needed", () => {
+		const decl = new MockDeclaration();
+		decl.resultType = {
+			value: {
+				name: "value",
+				dataType: "json",
+				isNullable: false,
+			},
+		};
+		const generator = new TsGenerator();
+		generator.addDeclaration(decl.getParsedQuery().queryName, decl);
+		expect(generator.toString()).toContain(
+			`import type { Json } from "tradukisto";`,
+		);
 	});
 });

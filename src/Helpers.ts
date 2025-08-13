@@ -1,5 +1,11 @@
 import { ArrayWrapper, FieldDetails } from "./Declaration";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface JsonArray extends ReadonlyArray<Json> {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface JsonRecord extends Record<string, Json> {}
+export type Json = boolean | number | string | null | JsonArray | JsonRecord;
+
 export const chunk = <T>(arr: T[], size: number) =>
 	Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
 		arr.slice(i * size, i * size + size),
