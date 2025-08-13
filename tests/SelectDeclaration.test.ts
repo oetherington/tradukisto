@@ -5,11 +5,13 @@ import {
 	parseSql,
 	ResolvedType,
 	SelectDeclaration,
+	StringCompilationUnit,
 } from "../src";
 
 describe("SelectDeclaration", () => {
-	const parseSingle = (sql: string) => {
-		const queries = parseSql("-- @query testQuery\n" + sql);
+	const parseSingle = async (sql: string) => {
+		const unit = new StringCompilationUnit("-- @query testQuery\n" + sql);
+		const queries = await parseSql(unit);
 		expect(queries.length).toBe(1);
 		return queries[0];
 	};
@@ -38,7 +40,7 @@ describe("SelectDeclaration", () => {
 			quotedAliasFieldQuotesTableQuotes: `SELECT "u"."id" FROM "users" u`,
 		};
 		for (const testName in simpleFieldTestQueries) {
-			it(testName, () => {
+			it(testName, async () => {
 				const testQuery = simpleFieldTestQueries[testName];
 				const decl = createDeclaration(
 					{
@@ -54,7 +56,7 @@ describe("SelectDeclaration", () => {
 						},
 						routines: {},
 					},
-					parseSingle(testQuery),
+					await parseSingle(testQuery),
 				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -71,7 +73,7 @@ describe("SelectDeclaration", () => {
 		}
 	});
 
-	it("Resolves unqualified star fields", () => {
+	it("Resolves unqualified star fields", async () => {
 		const decl = createDeclaration(
 			{
 				tables: {
@@ -100,7 +102,7 @@ describe("SelectDeclaration", () => {
 				},
 				routines: {},
 			},
-			parseSingle("SELECT * FROM users JOIN posts"),
+			await parseSingle("SELECT * FROM users JOIN posts"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -125,7 +127,7 @@ describe("SelectDeclaration", () => {
 		});
 	});
 
-	it("Resolves qualified star fields", () => {
+	it("Resolves qualified star fields", async () => {
 		const decl = createDeclaration(
 			{
 				tables: {
@@ -154,7 +156,7 @@ describe("SelectDeclaration", () => {
 				},
 				routines: {},
 			},
-			parseSingle("SELECT users.* FROM users JOIN posts"),
+			await parseSingle("SELECT users.* FROM users JOIN posts"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -174,7 +176,7 @@ describe("SelectDeclaration", () => {
 		});
 	});
 
-	it("Star fields disallow conflicts", () => {
+	it("Star fields disallow conflicts", async () => {
 		const decl = createDeclaration(
 			{
 				tables: {
@@ -203,7 +205,7 @@ describe("SelectDeclaration", () => {
 				},
 				routines: {},
 			},
-			parseSingle("SELECT * FROM users JOIN posts"),
+			await parseSingle("SELECT * FROM users JOIN posts"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -245,7 +247,7 @@ describe("SelectDeclaration", () => {
 
 		for (const testName in parameterTestCases) {
 			const { query, expectedParameters } = parameterTestCases[testName];
-			it(testName, () => {
+			it(testName, async () => {
 				const decl = createDeclaration(
 					{
 						tables: {
@@ -260,7 +262,7 @@ describe("SelectDeclaration", () => {
 						},
 						routines: {},
 					},
-					parseSingle(query),
+					await parseSingle(query),
 				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -270,7 +272,7 @@ describe("SelectDeclaration", () => {
 			});
 		}
 
-		it("Disallows conflicting casts", () => {
+		it("Disallows conflicting casts", async () => {
 			const decl = createDeclaration(
 				{
 					tables: {
@@ -285,7 +287,7 @@ describe("SelectDeclaration", () => {
 					},
 					routines: {},
 				},
-				parseSingle(
+				await parseSingle(
 					"SELECT *, :value::TEXT FROM users WHERE :value::BOOLEAN",
 				),
 			);
@@ -331,7 +333,7 @@ describe("SelectDeclaration", () => {
 			},
 		};
 		for (const testName in expressionTestCases) {
-			it(testName, () => {
+			it(testName, async () => {
 				const testCase = expressionTestCases[testName];
 				const database = {
 					tables: {},
@@ -344,7 +346,7 @@ describe("SelectDeclaration", () => {
 				};
 				const decl = createDeclaration(
 					database,
-					parseSingle(testCase.query),
+					await parseSingle(testCase.query),
 				);
 				expect(decl).not.toBeNull();
 				expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -362,7 +364,7 @@ describe("SelectDeclaration", () => {
 	});
 
 	describe("Can infer types of basic JSON functions", () => {
-		it("jsonb_build_object", () => {
+		it("jsonb_build_object", async () => {
 			const decl = createDeclaration(
 				{
 					tables: {
@@ -383,7 +385,7 @@ describe("SelectDeclaration", () => {
 					},
 					routines: {},
 				},
-				parseSingle(`
+				await parseSingle(`
 					SELECT jsonb_build_object('id', u.id, 'name', u.name) user
 					FROM users u
 				`),
@@ -413,7 +415,7 @@ describe("SelectDeclaration", () => {
 		});
 	});
 
-	it("Can infer types of aggregations", () => {
+	it("Can infer types of aggregations", async () => {
 		const decl = createDeclaration(
 			{
 				tables: {
@@ -428,7 +430,7 @@ describe("SelectDeclaration", () => {
 				},
 				routines: {},
 			},
-			parseSingle("SELECT ARRAY_AGG(id) value FROM users"),
+			await parseSingle("SELECT ARRAY_AGG(id) value FROM users"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -443,10 +445,10 @@ describe("SelectDeclaration", () => {
 		});
 	});
 
-	it("Can infer types numeric operations", () => {
+	it("Can infer types numeric operations", async () => {
 		const decl = createDeclaration(
 			{ tables: {}, routines: {} },
-			parseSingle("SELECT 1 + 2 - 3 * 4 / 5 % 6 AS value"),
+			await parseSingle("SELECT 1 + 2 - 3 * 4 / 5 % 6 AS value"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -461,7 +463,7 @@ describe("SelectDeclaration", () => {
 		});
 	});
 
-	it("Infers that limit param should be an integer", () => {
+	it("Infers that limit param should be an integer", async () => {
 		const decl = createDeclaration(
 			{
 				tables: {
@@ -476,7 +478,7 @@ describe("SelectDeclaration", () => {
 				},
 				routines: {},
 			},
-			parseSingle("SELECT * FROM users LIMIT :limit"),
+			await parseSingle("SELECT * FROM users LIMIT :limit"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -491,10 +493,10 @@ describe("SelectDeclaration", () => {
 		});
 	});
 
-	it("Detects single return value", () => {
+	it("Detects single return value", async () => {
 		const nonSingleDecl = createDeclaration(
 			{ tables: {}, routines: {} },
-			parseSingle("SELECT 1"),
+			await parseSingle("SELECT 1"),
 		);
 		expect(nonSingleDecl).not.toBeNull();
 		expect(nonSingleDecl).toBeInstanceOf(SelectDeclaration);
@@ -502,7 +504,7 @@ describe("SelectDeclaration", () => {
 		expect(nonSingleDecl!.isSingleRow()).toBe(false);
 		const singleDecl = createDeclaration(
 			{ tables: {}, routines: {} },
-			parseSingle("SELECT 1 LIMIT 1"),
+			await parseSingle("SELECT 1 LIMIT 1"),
 		);
 		expect(singleDecl).not.toBeNull();
 		expect(singleDecl).toBeInstanceOf(SelectDeclaration);

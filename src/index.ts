@@ -1,3 +1,4 @@
+export * from "./CompilationUnit";
 export * from "./DatabaseDetails";
 export * from "./Declaration";
 export * from "./Generator";

@@ -1,8 +1,10 @@
 import { AST, Parser } from "node-sql-parser";
 import { Visitor } from "./Visitor";
 import { isParam, ParamAST, ParamMap } from "./ParamMap";
+import { CompilationUnit } from "./CompilationUnit";
 
 const repoNameRegex = /--\s*@repo\s+([A-Z][a-zA-Z0-9_]*)/;
+const includeRegex = /--\s*@include\s+(.+)/g;
 const partialRegex =
 	/--\s*@partial\s+([a-z][a-zA-Z0-9_]*)\(\s*([a-z][a-zA-Z0-9_]*(?:\s*,\s*[a-z][a-zA-Z0-9_]*)*)?\s*\)\s*\r?\n((?:(?!--\s*@)[\s\S])*)/gm;
 const argRegex = /[^,]+/g;
@@ -25,9 +27,9 @@ type ParsedPartial = {
 	regex: RegExp;
 };
 
-const parsePartials = (sqlQuery: string) => {
+const parsePartials = (contents: string) => {
 	const partials: Record<string, ParsedPartial> = {};
-	const partialResults = sqlQuery.matchAll(partialRegex);
+	const partialResults = contents.matchAll(partialRegex);
 	for (const result of partialResults) {
 		const [_fullMatch, name, argsRaw = "", replacementRaw] = result;
 		if (!name) {
@@ -97,15 +99,36 @@ const expandPartials = (query: string, partials: Record<string, ParsedPartial>) 
 	return query;
 };
 
-export const parseSql = (sqlQuery: string): ParsedQuery[] => {
+const expandIncludedFilePartials = async (unit: CompilationUnit) => {
+	const partials: Record<string, ParsedPartial> = {};
+	const contents = unit.unsafeReadSync();
+	const includeResults = contents.matchAll(includeRegex);
+	for (const result of includeResults) {
+		const path = result?.[1];
+		if (!path) {
+			throw new Error("Invalid include");
+		}
+		const includedUnit = unit.openRelative(path);
+		Object.assign(partials, await expandIncludedFilePartials(includedUnit));
+		const contents = await includedUnit.read();
+		const includedPartials = parsePartials(contents);
+		Object.assign(partials, includedPartials);
+	}
+	return partials;
+};
+
+export const parseSql = async (unit: CompilationUnit): Promise<ParsedQuery[]> => {
 	const parser = new Parser();
 
-	const repoMatch = sqlQuery.match(repoNameRegex);
+	const contents = await unit.read();
+	const repoMatch = contents.match(repoNameRegex);
 	const repoName = repoMatch?.[1];
 
-	const partials = parsePartials(sqlQuery);
+	const includedPartials = await expandIncludedFilePartials(unit);
+	const localPartials = parsePartials(contents);
+	const partials = { ...includedPartials, ...localPartials };
 
-	const queryResults = Array.from(sqlQuery.matchAll(queryRegex));
+	const queryResults = Array.from(contents.matchAll(queryRegex));
 	if (!queryResults?.length) {
 		throw new Error("No queries found");
 	}
