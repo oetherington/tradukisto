@@ -201,10 +201,11 @@ export class TsGenerator extends Generator {
 		const [namedArgs, positionalArgs] = this.generateParams(typeName, paramMap);
 		const allArgs = sqlName + positionalArgs;
 		const isSingle = decl.isSingleRow();
-		const resultType = isSingle ? `${typeName} | null` : `${typeName}[]`;
+		const rowsType = `${typeName}[]`;
+		const resultType = isSingle ? `${typeName} | null` : rowsType;
 		const result: string[] = [
 			`\n  async ${queryName}(${namedArgs}): Promise<${resultType}> {`,
-			`    const res = await this.client.fetchRows(${allArgs});`,
+			`    const res: ${rowsType} = await this.client.fetchRows(${allArgs});`,
 			`    return ${isSingle ? "res?.[0] ?? null" : "res"};`,
 			"  }",
 		];

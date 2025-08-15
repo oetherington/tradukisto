@@ -245,12 +245,12 @@ export class TestRepo {
   }
 
   async testQuery1(): Promise<ITestQuery1[]> {
-    const res = await this.client.fetchRows(testQuery1Sql);
+    const res: ITestQuery1[] = await this.client.fetchRows(testQuery1Sql);
     return res;
   }
 
   async testQuery2(params: ITestQuery2Params): Promise<ITestQuery2[]> {
-    const res = await this.client.fetchRows(testQuery2Sql, [
+    const res: ITestQuery2[] = await this.client.fetchRows(testQuery2Sql, [
       params.id === undefined ? null : params.id,
       params.name === undefined ? null : params.name,
     ]);
@@ -258,7 +258,7 @@ export class TestRepo {
   }
 
   async testQuery3(): Promise<ITestQuery3 | null> {
-    const res = await this.client.fetchRows(testQuery3Sql);
+    const res: ITestQuery3[] = await this.client.fetchRows(testQuery3Sql);
     return res?.[0] ?? null;
   }
 }`,
