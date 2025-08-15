@@ -1,6 +1,6 @@
 {
 	"name": "tradukisto",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"description": "Generate Typescript types for SQL queries",
 	"homepage": "https://github.com/oetherington/tradukisto#readme",
 	"bugs": {
