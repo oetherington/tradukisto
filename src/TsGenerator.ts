@@ -45,6 +45,7 @@ export class TsGenerator extends Generator {
 		unknown: "unknown",
 		uuid: "string",
 		xml: "string",
+		null: "null",
 	};
 
 	private declarations: Record<string, Declaration> = {};

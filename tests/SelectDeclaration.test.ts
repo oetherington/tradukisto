@@ -342,6 +342,16 @@ describe("SelectDeclaration", () => {
 				expectedDataType: "double precision",
 				isNullable: true,
 			},
+			"Non-nullable case expressions": {
+				query: "SELECT CASE WHEN TRUE THEN 2 ELSE 3 END AS value",
+				expectedDataType: "integer",
+				isNullable: false,
+			},
+			"Nullable case expressions": {
+				query: "SELECT CASE WHEN TRUE THEN NULL ELSE 3 END AS value",
+				expectedDataType: "integer",
+				isNullable: true,
+			},
 		};
 		for (const testName in expressionTestCases) {
 			it(testName, async () => {

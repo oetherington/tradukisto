@@ -1,6 +1,7 @@
 import type {
 	AggrFunc,
 	Binary,
+	Case,
 	Cast,
 	Column,
 	ColumnRefItem,
@@ -242,11 +243,42 @@ export class SelectDeclaration implements Declaration {
 		];
 	}
 
+	private resolveCaseExpression(sources: Sources, expr: Case): FieldDetails[] {
+		if (!expr.args.length) {
+			throw new Error("Empty case expression");
+		}
+		const branchTypes = expr.args.flatMap((arg) =>
+			this.resolveExpression(sources, arg.result),
+		);
+		const details: FieldDetails = {
+			...branchTypes[0],
+			name: "case",
+		};
+		for (let i = 1; i < branchTypes.length; i++) {
+			const ty = branchTypes[i];
+			if (ty.dataType !== "unknown" && ty.dataType !== "null") {
+				details.dataType = ty.dataType;
+			}
+			if (ty.isNullable || ty.dataType === "null") {
+				details.isNullable = true;
+			}
+		}
+		return [details];
+	}
+
 	private resolveExpression(
 		sources: Sources,
 		expr: ExpressionValue,
 	): FieldDetails[] {
 		switch (expr.type) {
+			case "null":
+				return [
+					{
+						name: ANON_COLUMN_NAME,
+						dataType: "null",
+						isNullable: true,
+					},
+				];
 			case "expr_list":
 				return [this.resolveExprList(sources, expr as ExprList)];
 			case "column_ref":
@@ -298,6 +330,8 @@ export class SelectDeclaration implements Declaration {
 					},
 				];
 			}
+			case "case":
+				return this.resolveCaseExpression(sources, expr as Case);
 			case "function":
 				return this.resolveFunctionExpression(sources, expr as Function);
 			case "aggr_func":
