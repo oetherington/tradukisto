@@ -32,12 +32,12 @@ describe("UpdateDeclaration", () => {
 			id: {
 				name: "id",
 				dataType: "integer",
-				isNullable: true,
+				isNullable: false,
 			},
 			name: {
 				name: "name",
 				dataType: "text",
-				isNullable: true,
+				isNullable: false,
 			},
 		});
 	});

@@ -62,6 +62,16 @@ cast the parameter to be sure:
 SELECT * FROM users WHERE id = :id::TEXT
 ```
 
+By default, parameters must be defined and cannot be `null`. The make a nullable
+parameter, simply add an underscore to the end of the name. The underscore will
+not be in the name in the generated typescript; it just tells Tradukisto to make
+the parameter nullable:
+
+```sql
+-- @query getUserById
+SELECT * FROM users WHERE status = COALESCE(:status_::INTEGER, 2)
+```
+
 Section of SQL that you wish to reuse may be defined using `@partial`. Note
 that the replacement is text-based rather than AST-based.
 

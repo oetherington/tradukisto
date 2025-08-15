@@ -185,10 +185,12 @@ export class TsGenerator extends Generator {
 		const namedArgs = `params: ${this.typeNameToParamsName(typeName)}`;
 		const paramArray = paramMap.getParamArray();
 		const positionalArgs = paramArray
-			.map(
-				(item) =>
-					`      params.${item} === undefined ? null : params.${item},`,
-			)
+			.map((item) => {
+				if (item.endsWith("_")) {
+					item = item.slice(0, item.length - 1);
+				}
+				return `      params.${item} === undefined ? null : params.${item},`;
+			})
 			.join("\n");
 		return [namedArgs, `, [\n${positionalArgs}\n    ]`];
 	}

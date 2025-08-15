@@ -21,6 +21,7 @@ import {
 	Declaration,
 	ANON_COLUMN_NAME,
 	inferParameterTypes,
+	normalizeParamName,
 } from "./Declaration";
 import { aggregates, chunk, operatorTypes } from "./Helpers";
 import type { DatabaseDetails } from "./DatabaseDetails";
@@ -306,7 +307,7 @@ export class SelectDeclaration implements Declaration {
 					{
 						name: ANON_COLUMN_NAME,
 						dataType: "unknown",
-						isNullable: true,
+						isNullable: normalizeParamName(expr.value).isNullable,
 					},
 				];
 			default:

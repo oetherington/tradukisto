@@ -96,7 +96,7 @@ describe("SelectDeclaration", () => {
 							tableName: "posts",
 							columnName: "userId",
 							dataType: "integer",
-							isNullable: true,
+							isNullable: false,
 						},
 					},
 				},
@@ -122,7 +122,7 @@ describe("SelectDeclaration", () => {
 			userId: {
 				name: "userId",
 				dataType: "integer",
-				isNullable: true,
+				isNullable: false,
 			},
 		});
 	});
@@ -150,7 +150,7 @@ describe("SelectDeclaration", () => {
 							tableName: "posts",
 							columnName: "userId",
 							dataType: "integer",
-							isNullable: true,
+							isNullable: false,
 						},
 					},
 				},
@@ -199,7 +199,7 @@ describe("SelectDeclaration", () => {
 							tableName: "posts",
 							columnName: "id",
 							dataType: "integer",
-							isNullable: true,
+							isNullable: false,
 						},
 					},
 				},
@@ -222,25 +222,31 @@ describe("SelectDeclaration", () => {
 			booleanExpression: {
 				query: "SELECT * FROM users WHERE :id",
 				expectedParameters: {
-					id: { name: "id", dataType: "unknown", isNullable: true },
+					id: { name: "id", dataType: "unknown", isNullable: false },
 				},
 			},
 			simpleEqualityExpression: {
 				query: "SELECT * FROM users WHERE id = :id",
 				expectedParameters: {
-					id: { name: "id", dataType: "unknown", isNullable: true },
+					id: { name: "id", dataType: "unknown", isNullable: false },
 				},
 			},
 			castExpression: {
 				query: "SELECT * FROM users WHERE id = :id::TEXT",
 				expectedParameters: {
-					id: { name: "id", dataType: "text", isNullable: true },
+					id: { name: "id", dataType: "text", isNullable: false },
 				},
 			},
 			paramInSelectedColumn: {
 				query: 'SELECT *, :value AS "value" FROM users',
 				expectedParameters: {
-					value: { name: "value", dataType: "unknown", isNullable: true },
+					value: { name: "value", dataType: "unknown", isNullable: false },
+				},
+			},
+			nullableParameter: {
+				query: "SELECT * FROM users WHERE :cond_",
+				expectedParameters: {
+					cond: { name: "cond", dataType: "unknown", isNullable: true },
 				},
 			},
 		};
@@ -321,8 +327,13 @@ describe("SelectDeclaration", () => {
 				query: "SELECT (1.2)::INTEGER AS value",
 				expectedDataType: "integer",
 			},
-			Params: {
-				query: "SELECT :id AS value",
+			"Non-nullable params": {
+				query: "SELECT :qwerty AS value",
+				expectedDataType: "unknown",
+				isNullable: false,
+			},
+			"Nullable params": {
+				query: "SELECT :id_ AS value",
 				expectedDataType: "unknown",
 				isNullable: true,
 			},

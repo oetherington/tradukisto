@@ -47,6 +47,17 @@ export const createDeclaration = (
 	}
 };
 
+type NormalizedParamName = {
+	name: string;
+	isNullable: boolean;
+};
+
+export const normalizeParamName = (paramName: string): NormalizedParamName => {
+	const isNullable = paramName.endsWith("_");
+	const name = isNullable ? paramName.slice(0, paramName.length - 1) : paramName;
+	return { name, isNullable };
+};
+
 export const inferParameterTypes = (
 	paramMap: ParamMap,
 	ast: AST,
@@ -57,10 +68,11 @@ export const inferParameterTypes = (
 	// First just make sure we find _all_ the parameters, but don't make
 	// any attempt at typechecking
 	for (const paramName of paramMap.getParamArray()) {
-		params[paramName] = {
-			name: paramName,
+		const { name, isNullable } = normalizeParamName(paramName);
+		params[name] = {
+			name,
 			dataType: "unknown",
-			isNullable: true,
+			isNullable,
 		};
 	}
 
@@ -68,11 +80,11 @@ export const inferParameterTypes = (
 	// TODO: Handle more complex expressions here
 	const limitParam = limit?.value?.[0];
 	if (limitParam?.type === "param") {
-		const limitParamName = String(limitParam.value);
-		params[limitParamName] = {
-			name: limitParamName,
+		const { name, isNullable } = normalizeParamName(String(limitParam.value));
+		params[name] = {
+			name,
 			dataType: "integer",
-			isNullable: false,
+			isNullable,
 		};
 	}
 
@@ -87,23 +99,23 @@ export const inferParameterTypes = (
 			"expr" in value &&
 			isParam(value.expr),
 		(value) => {
-			const paramName = value.expr.value;
+			const { name, isNullable } = normalizeParamName(value.expr.value);
 			const dataType = value.target[0]?.dataType?.toLowerCase();
-			if (!paramName || !dataType) {
+			if (!name || !dataType) {
 				throw new Error("Invalid cast expression");
 			}
-			const currentType = params[paramName];
+			const currentType = params[name];
 			if (
 				currentType &&
 				currentType.dataType !== dataType &&
 				currentType.dataType !== "unknown"
 			) {
-				throw new Error(`Conflicting types for: ${paramName}`);
+				throw new Error(`Conflicting types for: ${name}`);
 			}
-			params[paramName] = {
-				name: paramName,
+			params[name] = {
+				name,
 				dataType,
-				isNullable: true,
+				isNullable,
 			};
 		},
 	).visit(ast);
