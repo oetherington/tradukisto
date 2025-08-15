@@ -26,11 +26,13 @@ export type FieldDetails = {
 	isNullable: boolean;
 };
 
+type DeclarationResultType = "none" | "one" | "many";
+
 export interface Declaration {
 	getParsedQuery(): ParsedQuery;
 	resolveResultType(): ResolvedType;
 	resolveParameterTypes(): ResolvedType;
-	isSingleRow(): boolean;
+	getResultType(): DeclarationResultType;
 }
 
 export const createDeclaration = (

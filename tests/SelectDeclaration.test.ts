@@ -512,7 +512,7 @@ describe("SelectDeclaration", () => {
 		expect(nonSingleDecl).not.toBeNull();
 		expect(nonSingleDecl).toBeInstanceOf(SelectDeclaration);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		expect(nonSingleDecl!.isSingleRow()).toBe(false);
+		expect(nonSingleDecl!.getResultType()).toBe("many");
 		const singleDecl = createDeclaration(
 			{ tables: {}, routines: {} },
 			await parseSingle("SELECT 1 LIMIT 1"),
@@ -520,6 +520,6 @@ describe("SelectDeclaration", () => {
 		expect(singleDecl).not.toBeNull();
 		expect(singleDecl).toBeInstanceOf(SelectDeclaration);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		expect(singleDecl!.isSingleRow()).toBe(true);
+		expect(singleDecl!.getResultType()).toBe("one");
 	});
 });

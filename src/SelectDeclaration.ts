@@ -357,7 +357,7 @@ export class SelectDeclaration implements Declaration {
 		);
 	}
 
-	isSingleRow() {
-		return this.ast.limit?.value?.[0]?.value === 1;
+	getResultType() {
+		return this.ast.limit?.value?.[0]?.value === 1 ? "one" : "many";
 	}
 }

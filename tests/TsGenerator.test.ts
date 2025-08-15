@@ -34,8 +34,8 @@ class MockDeclaration implements Declaration {
 		return this.parameterTypes;
 	}
 
-	isSingleRow() {
-		return false;
+	getResultType() {
+		return "many" as const;
 	}
 }
 
@@ -196,6 +196,8 @@ describe("TsGenerator", () => {
 			SELECT :id::TEXT AS value, :name_ AS value2;
 			-- @query testQuery3
 			SELECT 3 AS value LIMIT 1;
+			-- @query testQuery4
+			UPDATE "users" SET name = :name::TEXT
 		`),
 		);
 		const decls = queries
@@ -237,6 +239,13 @@ export interface ITestQuery3 {
 export const testQuery3Sql = \`-- Test.testQuery3
 SELECT 3 AS value LIMIT 1;\`;
 
+export interface ITestQuery4Params {
+  name: string,
+}
+
+export const testQuery4Sql = \`-- Test.testQuery4
+UPDATE "users" SET name = $1::TEXT\`;
+
 export class TestRepo {
   protected client: PostgresClient;
 
@@ -260,6 +269,12 @@ export class TestRepo {
   async testQuery3(): Promise<ITestQuery3 | null> {
     const res: ITestQuery3[] = await this.client.fetchRows(testQuery3Sql);
     return res?.[0] ?? null;
+  }
+
+  async testQuery4(params: ITestQuery4Params): Promise<void> {
+    await this.client.fetchRows(testQuery4Sql, [
+      params.name === undefined ? null : params.name,
+    ]);
   }
 }`,
 		);

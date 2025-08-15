@@ -27,7 +27,7 @@ export class UpdateDeclaration implements Declaration {
 			return {};
 		}
 
-		// TODO
+		// TODO: Handle `returning` clause
 		void this.databaseDetails;
 		throw new Error("Unimplemented: resolveResultType with 'returning'");
 	}
@@ -36,8 +36,8 @@ export class UpdateDeclaration implements Declaration {
 		return inferParameterTypes(this.parsedQuery.paramMap, this.ast, null);
 	}
 
-	isSingleRow(): boolean {
-		// TODO
-		return false;
+	getResultType() {
+		// TODO: Handle `returning` clause
+		return "none" as const;
 	}
 }

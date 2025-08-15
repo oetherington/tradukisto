@@ -200,15 +200,26 @@ export class TsGenerator extends Generator {
 		const sqlName = this.queryNameToSqlName(queryName);
 		const [namedArgs, positionalArgs] = this.generateParams(typeName, paramMap);
 		const allArgs = sqlName + positionalArgs;
-		const isSingle = decl.isSingleRow();
+		const declResultType = decl.getResultType();
+
 		const rowsType = `${typeName}[]`;
-		const resultType = isSingle ? `${typeName} | null` : rowsType;
+		const isVoid = declResultType === "none";
+		const isSingle = declResultType === "one";
+		const resultType = isVoid
+			? "void"
+			: isSingle
+				? `${typeName} | null`
+				: rowsType;
+		const variable = isVoid ? "" : `const res: ${rowsType} = `;
+
 		const result: string[] = [
 			`\n  async ${queryName}(${namedArgs}): Promise<${resultType}> {`,
-			`    const res: ${rowsType} = await this.client.fetchRows(${allArgs});`,
-			`    return ${isSingle ? "res?.[0] ?? null" : "res"};`,
-			"  }",
+			`    ${variable}await this.client.fetchRows(${allArgs});`,
 		];
+		if (!isVoid) {
+			result.push(`    return ${isSingle ? "res?.[0] ?? null" : "res"};`);
+		}
+		result.push("  }");
 		return result.join("\n");
 	}
 
