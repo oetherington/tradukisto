@@ -20,18 +20,33 @@ acknowledge that you understand these risks.
 
 ## Usage
 
-If your sql files are all located in, for instance, `src/lib/queries`, you can
-generate Typescript types with `npx tradukisto src/lib/queries/**/*.sql` with
-npm, or `yarn tradukisto src/lib/queries/**/*.sql`. The file path uses standard
-glob syntax.
+Run Tradukisto with `npx tradukisto`. You can optionally pass in the name of
+a config file to use as the first argument
+`npx tradukisto tradukisto.config.json`.
 
 The connection string for your database must be in an environment variable
-called `DATABASE_URL`. If you store your environment variables in a .env file
-you can run Tradukisto using a tool such as
+(by default `DATABASE_URL`). If you store your environment variables in a .env
+file you can run Tradukisto using a tool such as
 [env-cmd](https://www.npmjs.com/package/env-cmd):
 
 ```
-npx env-cmd -X tradukisto src/lib/queries/**/*.sql
+npx env-cmd -X tradukisto tradukisto.config.json
+```
+
+## Configuration
+
+Tradukisto can optionally use a JSON config file. The default values are shown
+below:
+
+```json
+{
+    // List of SQL input files using glob syntax. Can be a string or a string[].
+    "files": "src/**/*.sql",
+    // The name of the environment variable containing the Postgres connection string
+    "connectionVariableName": "DATABASE_URL",
+    // The maximum stack depth for partial expansions
+    partialStackDepth: 100,
+}
 ```
 
 ## SQL files

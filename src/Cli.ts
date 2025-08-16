@@ -3,11 +3,12 @@
 import { writeFile } from "node:fs/promises";
 import { glob } from "glob";
 import { DatabaseDetails, fetchDatabaseDetails } from "./DatabaseDetails";
-import { parseSql } from "./Parser";
+import { parseSql, setPartialStackDepth } from "./Parser";
 import { PgPostgresClient } from "./PgPostgresClient";
 import { createDeclaration, type Declaration } from "./Declaration";
 import { FileCompilationUnit } from "./CompilationUnit";
 import { TsGenerator } from "./TsGenerator";
+import { parseConfigFile } from "./Config";
 import type { Generator } from "./Generator";
 
 const processFile = async (
@@ -46,23 +47,24 @@ const processFile = async (
 };
 
 const cliMain = async () => {
-	const databaseUrl = process.env.DATABASE_URL;
+	const configPath = process.argv[2];
+	const config = await parseConfigFile(configPath);
+
+	setPartialStackDepth(config.partialStackDepth);
+
+	const databaseUrl = process.env[config.connectionVariableName];
 	if (!databaseUrl) {
 		throw new Error("No database url provided");
 	}
 
-	const targetGlob = process.argv[2];
-	if (!targetGlob) {
-		throw new Error("No target provided");
-	}
-
-	const fileNames = await glob(targetGlob);
+	const fileNames = await glob(config.files);
 	if (!fileNames.length) {
-		throw new Error(`No files found matching glob "${targetGlob}"`);
+		throw new Error(`No files found matching glob "${config.files}"`);
 	}
 
 	const client = new PgPostgresClient(databaseUrl);
 	const databaseDetails = await fetchDatabaseDetails(client);
+	const clientEndPromise = client.end();
 
 	const promises: Promise<string | Error>[] = [];
 	for (const fileName of fileNames) {
@@ -84,7 +86,7 @@ const cliMain = async () => {
 		console.error(`Error in "${fileName}":`, actualError.message);
 	}
 
-	await client.end();
+	await clientEndPromise;
 
 	process.exit(errors.length ? 1 : 0);
 };

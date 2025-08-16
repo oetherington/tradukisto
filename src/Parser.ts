@@ -11,9 +11,10 @@ const argRegex = /[^,]+/g;
 const queryRegex =
 	/--\s*@query\s+([a-z][a-zA-Z0-9_]*)\s*\r?\n((?:(?!--\s*@).|\s)*)/gm;
 
-const MAXIMUM_STACK_DEPTH = 100;
-
 const PARSER_OPTIONS = { database: "postgresql" };
+
+let partialStackDepth = 100;
+export const setPartialStackDepth = (depth: number) => (partialStackDepth = depth);
 
 export type ParsedQuery = {
 	repoName?: string;
@@ -65,7 +66,7 @@ const expandPartials = (
 	partials: Record<string, ParsedPartial>,
 	stackDepth = 0,
 ): string => {
-	if (stackDepth > MAXIMUM_STACK_DEPTH) {
+	if (stackDepth > partialStackDepth) {
 		throw new Error("Partial expansion stack depth exceeded");
 	}
 	const startQuery = query;
