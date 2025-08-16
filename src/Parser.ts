@@ -13,6 +13,8 @@ const queryRegex =
 
 const MAXIMUM_STACK_DEPTH = 100;
 
+const PARSER_OPTIONS = { database: "postgresql" };
+
 export type ParsedQuery = {
 	repoName?: string;
 	queryName: string;
@@ -129,6 +131,23 @@ const expandIncludedFilePartials = async (unit: CompilationUnit) => {
 	return partials;
 };
 
+const queryToAST = (parser: Parser, query: string): AST => {
+	try {
+		const ast = parser.astify(query, PARSER_OPTIONS);
+		if (!Array.isArray(ast)) {
+			return ast;
+		}
+		if (ast.length === 1) {
+			return ast[0];
+		}
+		throw new Error("Invalid query nesting");
+	} catch (e) {
+		// eslint-disable-next-line no-console
+		console.error("SQL parse error in query:", query);
+		throw new Error("SQL parse error", { cause: e });
+	}
+};
+
 export const parseSql = async (unit: CompilationUnit): Promise<ParsedQuery[]> => {
 	const parser = new Parser();
 
@@ -145,8 +164,6 @@ export const parseSql = async (unit: CompilationUnit): Promise<ParsedQuery[]> =>
 		throw new Error("No queries found");
 	}
 
-	const parserOptions = { database: "postgresql" };
-
 	const queries: ParsedQuery[] = queryResults.map((result) => {
 		// Get the query name, type name and raw query from the regex.
 		const queryName = result[1];
@@ -157,14 +174,7 @@ export const parseSql = async (unit: CompilationUnit): Promise<ParsedQuery[]> =>
 		const expandedQuery = expandPartials(rawQuery, partials);
 
 		// Parse the query into an AST.
-		let ast = parser.astify(expandedQuery, parserOptions);
-		if (Array.isArray(ast)) {
-			if (ast.length === 1) {
-				ast = ast[0];
-			} else {
-				throw new Error("Invalid query nesting");
-			}
-		}
+		const ast = queryToAST(parser, expandedQuery);
 
 		// Find all the parameters and number them (1-indexed). Update the
 		// query to use numbered parameters instead of named.
@@ -178,7 +188,7 @@ export const parseSql = async (unit: CompilationUnit): Promise<ParsedQuery[]> =>
 
 		// Now regenerate the query with the new parameters
 		const query = paramMap.count()
-			? parser.sqlify(transformedAst, parserOptions)
+			? parser.sqlify(transformedAst, PARSER_OPTIONS)
 			: expandedQuery;
 
 		// Done!
