@@ -1,6 +1,8 @@
 # Tradukisto
 ## Generate Typescript types for SQL queries
 
+[![NPM Version](https://img.shields.io/npm/v/tradukisto)](https://www.npmjs.com/package/tradukisto)
+
 Tradukisto is a tool for generating Typescript types for arbitrary SQL queries
 based on the Schema of a live Postgres database, plus some basic templating
 utilities.
@@ -16,7 +18,7 @@ acknowledge that you understand these risks.
 
 ## Installation
 
-`npm install tradukisto --save-dev` or `yarn add tradukisto --dev`
+`npm install tradukisto` or `yarn add tradukisto`
 
 ## Usage
 
