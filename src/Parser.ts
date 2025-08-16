@@ -11,6 +11,8 @@ const argRegex = /[^,]+/g;
 const queryRegex =
 	/--\s*@query\s+([a-z][a-zA-Z0-9_]*)\s*\r?\n((?:(?!--\s*@).|\s)*)/gm;
 
+const MAXIMUM_STACK_DEPTH = 100;
+
 export type ParsedQuery = {
 	repoName?: string;
 	queryName: string;
@@ -56,7 +58,15 @@ const parsePartials = (contents: string) => {
 	return partials;
 };
 
-const expandPartials = (query: string, partials: Record<string, ParsedPartial>) => {
+const expandPartials = (
+	query: string,
+	partials: Record<string, ParsedPartial>,
+	stackDepth = 0,
+): string => {
+	if (stackDepth > MAXIMUM_STACK_DEPTH) {
+		throw new Error("Partial expansion stack depth exceeded");
+	}
+	const startQuery = query;
 	for (const partialName in partials) {
 		const parsedPartial = partials[partialName];
 		for (
@@ -96,7 +106,9 @@ const expandPartials = (query: string, partials: Record<string, ParsedPartial>) 
 			query = before + expanded + after;
 		}
 	}
-	return query;
+	return query === startQuery
+		? query
+		: expandPartials(query, partials, stackDepth + 1);
 };
 
 const expandIncludedFilePartials = async (unit: CompilationUnit) => {

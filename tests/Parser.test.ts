@@ -49,12 +49,12 @@ describe("Parser", () => {
 	it("Names multiple queries from comments", async () => {
 		const queries = await parseSql(
 			new StringCompilationUnit(`
-			-- @query myFirstQuery
-			SELECT * FROM users;
+				-- @query myFirstQuery
+				SELECT * FROM users;
 
-			-- @query mySecondQuery
-			SELECT * FROM posts;
-		`),
+				-- @query mySecondQuery
+				SELECT * FROM posts;
+			`),
 		);
 		expect(queries.length).toBe(2);
 		expect(queries[0].queryName).toBe("myFirstQuery");
@@ -63,14 +63,14 @@ describe("Parser", () => {
 	it("Parses queries split over multiple lines", async () => {
 		const queries = await parseSql(
 			new StringCompilationUnit(`
-			-- @query testQuery
-			SELECT
-				name
-			FROM
-				users
-			WHERE
-				_id = 0;
-		`),
+				-- @query testQuery
+				SELECT
+					name
+				FROM
+					users
+				WHERE
+					_id = 0;
+			`),
 		);
 		expect(queries.length).toBe(1);
 		expect(queries[0].queryName).toBe("testQuery");
@@ -110,12 +110,12 @@ describe("Parser", () => {
 	it("Parses and expands partials with no arguments", async () => {
 		const queries = await parseSql(
 			new StringCompilationUnit(`
-			-- @partial myFilter()
-			verified IS TRUE
+				-- @partial myFilter()
+				verified IS TRUE
 
-			-- @query testQuery
-			SELECT id FROM users WHERE myFilter() AND deleted IS NOT TRUE
-		`),
+				-- @query testQuery
+				SELECT id FROM users WHERE myFilter() AND deleted IS NOT TRUE
+			`),
 		);
 		expect(queries.length).toBe(1);
 		expect(queries[0].query).toBe(
@@ -125,12 +125,12 @@ describe("Parser", () => {
 	it("Parses and expands partials with one argument", async () => {
 		const queries = await parseSql(
 			new StringCompilationUnit(`
-			-- @partial myFilter(table)
-			table.verified IS TRUE
+				-- @partial myFilter(table)
+				table.verified IS TRUE
 
-			-- @query testQuery
-			SELECT id FROM users WHERE myFilter(users) AND deleted IS NOT TRUE
-		`),
+				-- @query testQuery
+				SELECT id FROM users WHERE myFilter(users) AND deleted IS NOT TRUE
+			`),
 		);
 		expect(queries.length).toBe(1);
 		expect(queries[0].query).toBe(
@@ -140,12 +140,12 @@ describe("Parser", () => {
 	it("Parses and expands partials with multiple arguments", async () => {
 		const queries = await parseSql(
 			new StringCompilationUnit(`
-			-- @partial myFilter(table, value)
-			table.verified IS value
+				-- @partial myFilter(table, value)
+				table.verified IS value
 
-			-- @query testQuery
-			SELECT id FROM users WHERE myFilter(users, FALSE) AND deleted IS NOT TRUE
-		`),
+				-- @query testQuery
+				SELECT id FROM users WHERE myFilter(users, FALSE) AND deleted IS NOT TRUE
+			`),
 		);
 		expect(queries.length).toBe(1);
 		expect(queries[0].query).toBe(
@@ -155,17 +155,49 @@ describe("Parser", () => {
 	it("Can expand partials multiple times", async () => {
 		const queries = await parseSql(
 			new StringCompilationUnit(`
-			-- @partial trueFilter(field)
-			field IS TRUE
+				-- @partial trueFilter(field)
+				field IS TRUE
 
-			-- @query testQuery
-			SELECT id FROM users WHERE trueFilter(verified) AND trueFilter(deleted)
-		`),
+				-- @query testQuery
+				SELECT id FROM users WHERE trueFilter(verified) AND trueFilter(deleted)
+			`),
 		);
 		expect(queries.length).toBe(1);
 		expect(queries[0].query).toBe(
 			"SELECT id FROM users WHERE verified IS TRUE AND deleted IS TRUE",
 		);
+	});
+	it("Partials can call other partials defined before them", async () => {
+		const queries = await parseSql(
+			new StringCompilationUnit(`
+				-- @partial partial1(field)
+				field IS TRUE
+
+				-- @partial partial2(field)
+				partial1(field)
+
+				-- @query testQuery
+				SELECT id FROM users WHERE partial2(verified)
+			`),
+		);
+		expect(queries.length).toBe(1);
+		expect(queries[0].query).toBe("SELECT id FROM users WHERE verified IS TRUE");
+	});
+	it("Partials can call other partials defined after them", async () => {
+		const queries = await parseSql(
+			new StringCompilationUnit(`
+				-- @partial partial2(field)
+				partial1(field)
+
+				-- @partial partial1(field)
+				field IS TRUE
+
+				-- @query testQuery
+				SELECT id FROM users WHERE partial2(verified)
+			`),
+		);
+		expect(queries.length).toBe(1);
+		expect(queries[0].query).toBe("SELECT id FROM users WHERE verified IS TRUE");
 	});
 
 	describe("Includes", () => {
@@ -175,20 +207,18 @@ describe("Parser", () => {
 				1
 			`);
 			const helperUnit2 = new StringCompilationUnit(
-				`
-				-- @include helpers1.sql
-			`,
+				"-- @include helpers1.sql",
 				{
 					"helpers1.sql": helperUnit1,
 				},
 			);
 			const mainUnit = new StringCompilationUnit(
 				`
-				-- @include helpers2.sql
+					-- @include helpers2.sql
 
-				-- @query testQuery
-				SELECT one();
-			`,
+					-- @query testQuery
+					SELECT one();
+				`,
 				{
 					"helpers2.sql": helperUnit2,
 				},
