@@ -484,7 +484,7 @@ describe("SelectDeclaration", () => {
 		});
 	});
 
-	it("Infers that limit param should be an integer", async () => {
+	it("Infers that offset and limit params should be integers", async () => {
 		const decl = createDeclaration(
 			{
 				tables: {
@@ -499,7 +499,7 @@ describe("SelectDeclaration", () => {
 				},
 				routines: {},
 			},
-			await parseSingle("SELECT * FROM users LIMIT :limit"),
+			await parseSingle("SELECT * FROM users LIMIT :limit OFFSET :offset"),
 		);
 		expect(decl).not.toBeNull();
 		expect(decl).toBeInstanceOf(SelectDeclaration);
@@ -508,6 +508,11 @@ describe("SelectDeclaration", () => {
 		expect(params).toStrictEqual({
 			limit: {
 				name: "limit",
+				dataType: "integer",
+				isNullable: false,
+			},
+			offset: {
+				name: "offset",
 				dataType: "integer",
 				isNullable: false,
 			},

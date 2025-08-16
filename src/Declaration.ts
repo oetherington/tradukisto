@@ -80,14 +80,17 @@ export const inferParameterTypes = (
 
 	// If a param if given as the limit then it must be an integer
 	// TODO: Handle more complex expressions here
-	const limitParam = limit?.value?.[0];
-	if (limitParam?.type === "param") {
-		const { name, isNullable } = normalizeParamName(String(limitParam.value));
-		params[name] = {
-			name,
-			dataType: "integer",
-			isNullable,
-		};
+	for (const limitParam of limit?.value ?? []) {
+		if (limitParam?.type === "param") {
+			const { name, isNullable } = normalizeParamName(
+				String(limitParam.value),
+			);
+			params[name] = {
+				name,
+				dataType: "integer",
+				isNullable,
+			};
+		}
 	}
 
 	// Now fill in the types for any parameters with explicit casts
