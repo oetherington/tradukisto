@@ -177,7 +177,10 @@ export class SelectDeclaration implements Declaration {
 			if (valueType.length !== 1) {
 				throw new Error("json_build_object expected single value");
 			}
-			dataType[fieldName] = valueType[0];
+			dataType[fieldName] = {
+				...valueType[0],
+				name: fieldName,
+			};
 		}
 
 		return [
@@ -185,6 +188,34 @@ export class SelectDeclaration implements Declaration {
 				name,
 				dataType,
 				isNullable: false,
+			},
+		];
+	}
+
+	private resolveCoalesce(
+		sources: Sources,
+		args: ExpressionValue[],
+	): FieldDetails[] {
+		if (!args.length) {
+			return [
+				{
+					name: "coalesce",
+					dataType: "null",
+					isNullable: true,
+				},
+			];
+		}
+		const argTypes = args.flatMap((arg) => this.resolveExpression(sources, arg));
+		const dataTypes = argTypes.map(({ dataType }) => JSON.stringify(dataType));
+		const uniqueTypes = new Set(dataTypes);
+		uniqueTypes.delete(`"any"`);
+		uniqueTypes.delete(`"unknown"`);
+		uniqueTypes.delete(`"null"`);
+		return [
+			{
+				name: "coalesce",
+				dataType: JSON.parse(Array.from(uniqueTypes)[0]),
+				isNullable: !argTypes.some(({ isNullable }) => !isNullable),
 			},
 		];
 	}
@@ -201,6 +232,10 @@ export class SelectDeclaration implements Declaration {
 			nameLower === "jsonb_build_object"
 		) {
 			return this.resolveJsonBuildObject(sources, name, expr.args);
+		}
+
+		if (nameLower === "coalesce") {
+			return this.resolveCoalesce(sources, expr.args?.value ?? []);
 		}
 
 		const routine = this.databaseDetails.routines[nameLower];

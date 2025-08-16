@@ -384,7 +384,7 @@ describe("SelectDeclaration", () => {
 		}
 	});
 
-	describe("Can infer types of basic JSON functions", () => {
+	describe("Can infer types for special-case functions", () => {
 		it("jsonb_build_object", async () => {
 			const decl = createDeclaration(
 				{
@@ -418,6 +418,77 @@ describe("SelectDeclaration", () => {
 			expect(resultType).toStrictEqual({
 				user: {
 					name: "user",
+					dataType: {
+						id: {
+							name: "id",
+							dataType: "integer",
+							isNullable: false,
+						},
+						name: {
+							name: "name",
+							dataType: "text",
+							isNullable: false,
+						},
+					},
+					isNullable: false,
+				},
+			});
+		});
+		it("coalesce (not nullable)", async () => {
+			const decl = createDeclaration(
+				{ tables: {}, routines: {} },
+				await parseSingle(`
+					SELECT COALESCE(:input_::INTEGER, 3) AS value
+				`),
+			);
+			expect(decl).not.toBeNull();
+			expect(decl).toBeInstanceOf(SelectDeclaration);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const resultType = decl!.resolveResultType();
+			expect(resultType).toStrictEqual({
+				value: {
+					name: "value",
+					dataType: "integer",
+					isNullable: false,
+				},
+			});
+		});
+		it("coalesce (nullable)", async () => {
+			const decl = createDeclaration(
+				{ tables: {}, routines: {} },
+				await parseSingle(`
+					SELECT COALESCE(:input1_::INTEGER, :input2_::INTEGER) AS value
+				`),
+			);
+			expect(decl).not.toBeNull();
+			expect(decl).toBeInstanceOf(SelectDeclaration);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const resultType = decl!.resolveResultType();
+			expect(resultType).toStrictEqual({
+				value: {
+					name: "value",
+					dataType: "integer",
+					isNullable: true,
+				},
+			});
+		});
+		it("coalesce (with JSON objects)", async () => {
+			const decl = createDeclaration(
+				{ tables: {}, routines: {} },
+				await parseSingle(`
+					SELECT COALESCE(
+						:input_,
+						JSON_BUILD_OBJECT('id', 3, 'name', 'test')
+					) AS value
+				`),
+			);
+			expect(decl).not.toBeNull();
+			expect(decl).toBeInstanceOf(SelectDeclaration);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const resultType = decl!.resolveResultType();
+			expect(resultType).toStrictEqual({
+				value: {
+					name: "value",
 					dataType: {
 						id: {
 							name: "id",
