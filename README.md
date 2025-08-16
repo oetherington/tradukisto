@@ -33,6 +33,10 @@ file you can run Tradukisto using a tool such as
 npx env-cmd -X tradukisto tradukisto.config.json
 ```
 
+Tradukisto uses `glob` from `node:fs/promises` internally which way cause an
+"ExperimentalWarning" error message in some Node versions. This warning can be
+silenced with `npx --node-options='--no-warnings=ExperimentalWarning' tradukisto`.
+
 ## Configuration
 
 Tradukisto can optionally use a JSON config file. The default values are shown
@@ -48,6 +52,18 @@ below:
     partialStackDepth: 100,
 }
 ```
+
+## Watch mode
+
+Start tradukisto in watch mode by setting the `WATCH` environment variable to
+any truthy value:
+
+```sh
+WATCH=true npx tradukisto
+```
+
+Note that watch mode watches _files_, but you'll still need to manually restart
+after making database schema changes.
 
 ## SQL files
 
