@@ -44,14 +44,14 @@ silenced with `npx --node-options='--no-warnings=ExperimentalWarning' tradukisto
 Tradukisto can optionally use a JSON config file. The default values are shown
 below:
 
-```json
+```json5
 {
     // List of SQL input files using glob syntax. Can be a string or a string[].
     "files": "src/**/*.sql",
     // The name of the environment variable containing the Postgres connection string
     "connectionVariableName": "DATABASE_URL",
     // The maximum stack depth for partial expansions
-    partialStackDepth: 100,
+    "partialStackDepth": 100,
 }
 ```
 
