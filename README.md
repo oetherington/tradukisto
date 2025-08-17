@@ -24,7 +24,9 @@ acknowledge that you understand these risks.
 
 Run Tradukisto with `npx tradukisto`. You can optionally pass in the name of
 a config file to use as the first argument
-`npx tradukisto tradukisto.config.json`.
+`npx tradukisto tradukisto.config.json`. If no config file is specified,
+Tradukisto will try to read `./tradukisto.config.json` before falling-back to
+the default config.
 
 The connection string for your database must be in an environment variable
 (by default `DATABASE_URL`). If you store your environment variables in a .env

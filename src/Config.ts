@@ -1,4 +1,7 @@
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+
+const defaultConfigPath = "./tradukisto.config.json";
 
 type ConfigContents = {
 	files: string | string[];
@@ -59,7 +62,9 @@ export const parseConfig = (contents: string): Config => {
 
 export const parseConfigFile = async (filePath?: string): Promise<Config> => {
 	if (!filePath) {
-		return defaultConfig;
+		return existsSync(defaultConfigPath)
+			? parseConfigFile(defaultConfigPath)
+			: defaultConfig;
 	}
 	try {
 		const contents = await readFile(filePath, "utf-8");
