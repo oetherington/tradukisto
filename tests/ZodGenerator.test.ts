@@ -52,7 +52,7 @@ describe("ZodGenerator", () => {
 	it("Generates nullable zod types", () => {
 		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
-			"Test",
+			"ITest",
 			{
 				value: {
 					name: "value",
@@ -62,12 +62,12 @@ describe("ZodGenerator", () => {
 			},
 			false,
 		);
-		expect(result).toContain("z.object({\n  value: z.string().optional(),\n})");
+		expect(result).toContain("z.object({\n  value: z.string().nullable(),\n})");
 	});
 	it("Generates optional zod types", () => {
 		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
-			"Test",
+			"ITest",
 			{
 				value: {
 					name: "value",
@@ -77,12 +77,14 @@ describe("ZodGenerator", () => {
 			},
 			true,
 		);
-		expect(result).toContain("z.object({\n  value: z.string().optional(),\n})");
+		expect(result).toContain(
+			"z.object({\n  value: z.string().nullable().optional(),\n})",
+		);
 	});
 	it("Generates array zod types", () => {
 		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
-			"Test",
+			"ITest",
 			{
 				a: {
 					name: "a",
@@ -100,14 +102,14 @@ describe("ZodGenerator", () => {
 		expect(result).toContain(
 			"z.object({\n" +
 				"  a: z.string().array(),\n" +
-				"  b: z.int().array().optional(),\n" +
+				"  b: z.int().array().nullable(),\n" +
 				"})",
 		);
 	});
 	it("Generates nested zod types", () => {
 		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
-			"Test",
+			"ITest",
 			{
 				outer: {
 					name: "outer",
@@ -127,14 +129,14 @@ describe("ZodGenerator", () => {
 			"z.object({\n" +
 				"  outer: z.object({\n" +
 				"    inner: z.string(),\n" +
-				"  }).optional(),\n" +
+				"  }).nullable(),\n" +
 				"})",
 		);
 	});
 	it("Other types are `unknown`", () => {
 		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
-			"Test",
+			"ITest",
 			{
 				a: {
 					name: "a",
@@ -181,14 +183,14 @@ export type ITestQuery1 = z.infer<typeof testQuery1Schema>;
 
 export const testQuery2Schema = z.object({
   value: z.string(),
-  value2: z.unknown().optional(),
+  value2: z.unknown().nullable(),
 });
 
 export type ITestQuery2 = z.infer<typeof testQuery2Schema>;
 
 export const testQuery2ParamsSchema = z.object({
   id: z.string(),
-  name: z.unknown().optional(),
+  name: z.unknown().nullable().optional(),
 });
 
 export type ITestQuery2Params = z.infer<typeof testQuery2ParamsSchema>;

@@ -46,8 +46,9 @@ export class ZodGenerator extends TsGenerator {
 			inputFileName,
 			zodDataTypes,
 			".array()",
-			".optional()",
+			".nullable()",
 			"",
+			".optional()",
 			"z.object({",
 			"})",
 		);

@@ -54,7 +54,8 @@ export class TsGenerator extends Generator {
 		protected readonly dataTypes: Record<string, string> = typescriptDataTypes,
 		private readonly arraySuffix = "[]",
 		private readonly nullableSuffix = " | null",
-		private readonly optionalSuffix = "?",
+		private readonly optionalNameSuffix = "?",
+		private readonly optionalTypeSuffix = "",
 		private readonly objectPrefix = "{",
 		private readonly objectSuffix = "}",
 	) {
@@ -130,10 +131,12 @@ export class TsGenerator extends Generator {
 		if (details.name === ANON_COLUMN_NAME) {
 			throw new Error("You must name all anonymous columns");
 		}
-		const optional =
-			nullablesAreOptional && details.isNullable ? this.optionalSuffix : "";
+		const [nameSuffix, typeSuffix] =
+			nullablesAreOptional && details.isNullable
+				? [this.optionalNameSuffix, this.optionalTypeSuffix]
+				: ["", ""];
 		const ty = this.fieldDetailsToTSType(details, indent, nullablesAreOptional);
-		return `${details.name}${optional}: ${ty},`;
+		return `${details.name}${nameSuffix}: ${ty}${typeSuffix},`;
 	}
 
 	protected generateFieldDetailsRecord(
