@@ -41,12 +41,12 @@ export class Orchestrator {
 	}
 
 	/**
-	 * Returns a map from output file names to output file contents
+	 * Returns a map from output file paths to output file contents
 	 */
 	compile(): Record<string, string> {
 		const result: Record<string, string> = {};
 		for (const generator of this.generators) {
-			result[generator.getOutputFileName()] = generator.toString();
+			result[generator.getOutputFilePath()] = generator.toString();
 		}
 		return result;
 	}

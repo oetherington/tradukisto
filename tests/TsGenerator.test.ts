@@ -41,9 +41,9 @@ class MockDeclaration implements Declaration {
 }
 
 describe("TsGenerator", () => {
-	it("Formats output file name", () => {
+	it("Formats output file path", () => {
 		const generator = new TsGenerator("test.sql");
-		const outputFileName = generator.getOutputFileName();
+		const outputFileName = generator.getOutputFilePath();
 		expect(outputFileName).toBe("test.repo.ts");
 	});
 	describe("Generates simple Typescript types", () => {

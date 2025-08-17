@@ -8,9 +8,9 @@ import {
 } from "../src";
 
 describe("ZodGenerator", () => {
-	it("Formats output file name", () => {
+	it("Formats output file path", () => {
 		const generator = new ZodGenerator("test.sql");
-		const outputFileName = generator.getOutputFileName();
+		const outputFileName = generator.getOutputFilePath();
 		expect(outputFileName).toBe("test.schemas.ts");
 	});
 	describe("Generates simple zod types", () => {

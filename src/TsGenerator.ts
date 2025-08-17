@@ -50,7 +50,7 @@ export class TsGenerator extends Generator {
 	private hasJson = false;
 
 	constructor(
-		protected inputFileName: string,
+		protected inputFilePath: string,
 		protected readonly dataTypes: Record<string, string> = typescriptDataTypes,
 		private readonly arraySuffix = "[]",
 		private readonly nullableSuffix = " | null",
@@ -198,9 +198,11 @@ export class TsGenerator extends Generator {
 		if (!imports.length) {
 			return null;
 		}
-		const fileName = this.importTypesGenerator.getOutputFileName();
-		const filePath = `./${fileName.replace(".ts$", "")}`;
-		return `import type {\n  ${imports.join(",\n  ")},\n} from "${filePath}";`;
+		const filePath = this.importTypesGenerator.getOutputFilePath();
+		const fileParts = filePath.split("/");
+		const fileName = fileParts[fileParts.length - 1];
+		const importPath = `./${fileName.replace(".ts$", "")}`;
+		return `import type {\n  ${imports.join(",\n  ")},\n} from "${importPath}";`;
 	}
 
 	protected generateImports(): string | null {
@@ -319,7 +321,7 @@ export class TsGenerator extends Generator {
 		return [Generator.header, ...result].join("\n\n");
 	}
 
-	getOutputFileName(): string {
-		return this.inputFileName.replace(/sql$/, "repo.ts");
+	getOutputFilePath(): string {
+		return this.inputFilePath.replace(/sql$/, "repo.ts");
 	}
 }

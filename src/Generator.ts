@@ -15,5 +15,5 @@ export abstract class Generator {
 
 	abstract toString(): string;
 
-	abstract getOutputFileName(): string;
+	abstract getOutputFilePath(): string;
 }
