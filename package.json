@@ -36,7 +36,8 @@
 		"chokidar": "^4.0.3",
 		"minimatch": "^10.0.3",
 		"node-sql-parser": "^5.3.10",
-		"postgres": "^3.4.7"
+		"postgres": "^3.4.7",
+		"zod": "^4.0.17"
 	},
 	"devDependencies": {
 		"@electric-sql/pglite": "^0.3.5",

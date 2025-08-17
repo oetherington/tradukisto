@@ -55,7 +55,7 @@ describe("TsGenerator", () => {
 			it(ty, () => {
 				const generator = new TsGenerator();
 				const result = generator.generateType(
-					"Test",
+					"ITest",
 					{
 						value: {
 							name: "value",
@@ -66,7 +66,7 @@ describe("TsGenerator", () => {
 					false,
 				);
 				expect(result).toBe(
-					`export interface Test {\n  value: ${types[ty]},\n}`,
+					`export interface ITest {\n  value: ${types[ty]},\n}`,
 				);
 			});
 		}
@@ -123,7 +123,7 @@ describe("TsGenerator", () => {
 			"export interface Test {\n  a: string[],\n  b: number[] | null,\n}",
 		);
 	});
-	it("Generates nested typesript types", () => {
+	it("Generates nested typescript types", () => {
 		const generator = new TsGenerator();
 		const result = generator.generateType(
 			"Test",
@@ -146,7 +146,7 @@ describe("TsGenerator", () => {
 			"export interface Test {\n  outer: {\n    inner: string,\n  } | null,\n}",
 		);
 	});
-	it("Other types are `unkown`", () => {
+	it("Other types are `unknown`", () => {
 		const generator = new TsGenerator();
 		const result = generator.generateType(
 			"Test",

@@ -13,3 +13,4 @@ export * from "./Sources";
 export * from "./TsGenerator";
 export * from "./UpdateDeclaration";
 export * from "./Visitor";
+export * from "./ZodGenerator";
