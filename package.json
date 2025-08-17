@@ -1,6 +1,6 @@
 {
 	"name": "tradukisto",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"description": "Generate Typescript types and Zod schemas for SQL queries",
 	"keywords": [
 		"typescript",
