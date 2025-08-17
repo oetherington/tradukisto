@@ -17,7 +17,7 @@ describe("ZodGenerator", () => {
 		const types: Record<string, string> = {
 			"character varying": "z.string()",
 			text: "z.string()",
-			integer: "z.integer()",
+			integer: "z.int()",
 			"double precision": "z.number()",
 			boolean: "z.boolean()",
 			json: "z.json()",
@@ -100,7 +100,7 @@ describe("ZodGenerator", () => {
 		expect(result).toContain(
 			"z.object({\n" +
 				"  a: z.string().array(),\n" +
-				"  b: z.integer().array().optional(),\n" +
+				"  b: z.int().array().optional(),\n" +
 				"})",
 		);
 	});
@@ -174,7 +174,7 @@ describe("ZodGenerator", () => {
 import z from "zod/v4";
 
 export const testQuery1Schema = z.object({
-  value: z.integer(),
+  value: z.int(),
 });
 
 export type ITestQuery1 = z.infer<typeof testQuery1Schema>;
@@ -194,7 +194,7 @@ export const testQuery2ParamsSchema = z.object({
 export type ITestQuery2Params = z.infer<typeof testQuery2ParamsSchema>;
 
 export const testQuery3Schema = z.object({
-  value: z.integer(),
+  value: z.int(),
 });
 
 export type ITestQuery3 = z.infer<typeof testQuery3Schema>;
