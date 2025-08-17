@@ -13,7 +13,7 @@ export abstract class Generator {
 		this.declarations[name] = decl;
 	}
 
-	abstract toString(repoName?: string): string;
+	abstract toString(): string;
 
-	abstract getOutputFileName(inputFileName: string): string;
+	abstract getOutputFileName(): string;
 }

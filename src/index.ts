@@ -4,6 +4,7 @@ export * from "./DatabaseDetails";
 export * from "./Declaration";
 export * from "./Generator";
 export * from "./Helpers";
+export * from "./Orchestrator";
 export * from "./ParamMap";
 export * from "./Parser";
 export * from "./PgPostgresClient";

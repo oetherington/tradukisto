@@ -9,8 +9,8 @@ import {
 
 describe("ZodGenerator", () => {
 	it("Formats output file name", () => {
-		const generator = new ZodGenerator();
-		const outputFileName = generator.getOutputFileName("test.sql");
+		const generator = new ZodGenerator("test.sql");
+		const outputFileName = generator.getOutputFileName();
 		expect(outputFileName).toBe("test.schemas.ts");
 	});
 	describe("Generates simple zod types", () => {
@@ -27,7 +27,7 @@ describe("ZodGenerator", () => {
 		};
 		for (const ty in types) {
 			it(ty, () => {
-				const generator = new ZodGenerator();
+				const generator = new ZodGenerator("test.sql");
 				const result = generator.generateType(
 					"ITest",
 					{
@@ -50,7 +50,7 @@ describe("ZodGenerator", () => {
 		}
 	});
 	it("Generates nullable zod types", () => {
-		const generator = new ZodGenerator();
+		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
 			"Test",
 			{
@@ -65,7 +65,7 @@ describe("ZodGenerator", () => {
 		expect(result).toContain("z.object({\n  value: z.string().optional(),\n})");
 	});
 	it("Generates optional zod types", () => {
-		const generator = new ZodGenerator();
+		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
 			"Test",
 			{
@@ -80,7 +80,7 @@ describe("ZodGenerator", () => {
 		expect(result).toContain("z.object({\n  value: z.string().optional(),\n})");
 	});
 	it("Generates array zod types", () => {
-		const generator = new ZodGenerator();
+		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
 			"Test",
 			{
@@ -105,7 +105,7 @@ describe("ZodGenerator", () => {
 		);
 	});
 	it("Generates nested zod types", () => {
-		const generator = new ZodGenerator();
+		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
 			"Test",
 			{
@@ -132,7 +132,7 @@ describe("ZodGenerator", () => {
 		);
 	});
 	it("Other types are `unknown`", () => {
-		const generator = new ZodGenerator();
+		const generator = new ZodGenerator("test.sql");
 		const result = generator.generateType(
 			"Test",
 			{
@@ -164,7 +164,7 @@ describe("ZodGenerator", () => {
 		const decls = queries
 			.map((query) => createDeclaration(database, query))
 			.filter(Boolean) as Declaration[];
-		const generator = new ZodGenerator();
+		const generator = new ZodGenerator("test.sql");
 		for (const decl of decls) {
 			generator.addDeclaration(decl.getParsedQuery().queryName, decl);
 		}

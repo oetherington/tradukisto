@@ -8,6 +8,7 @@ describe("Config", () => {
 			files: "*.sql",
 			connectionVariableName: "DBCONN",
 			partialStackDepth: 10,
+			zod: false,
 		});
 	});
 	it("No file name returns default config", async () => {

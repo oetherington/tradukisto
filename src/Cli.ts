@@ -8,39 +8,38 @@ import { parseSql, setPartialStackDepth } from "./Parser";
 import { PgPostgresClient } from "./PgPostgresClient";
 import { createDeclaration, type Declaration } from "./Declaration";
 import { FileCompilationUnit } from "./CompilationUnit";
-import { TsGenerator } from "./TsGenerator";
 import { parseConfigFile } from "./Config";
-import type { Generator } from "./Generator";
+import { Orchestrator } from "./Orchestrator";
 
 const processFile = async (
 	databaseDetails: DatabaseDetails,
-	generator: Generator,
-	fileName: string,
-): Promise<string | Error> => {
+	orchestrator: Orchestrator,
+): Promise<string[] | Error> => {
+	const inputFileName = orchestrator.getInputFileName();
 	try {
-		if (!fileName.endsWith(".sql")) {
-			throw new Error(`Expected ${fileName} to have .sql extension`);
+		if (!inputFileName.endsWith(".sql")) {
+			throw new Error(`Expected ${inputFileName} to have .sql extension`);
 		}
 
-		const queries = await parseSql(new FileCompilationUnit(fileName));
+		const queries = await parseSql(new FileCompilationUnit(inputFileName));
 		const decls = queries
 			.map((query) => createDeclaration(databaseDetails, query))
 			.filter(Boolean) as Declaration[];
 		for (let i = 0; i < queries.length; i++) {
 			const query = queries[i];
 			const decl = decls[i];
-			generator.addDeclaration(query.queryName, decl);
+			orchestrator.addDeclaration(query.queryName, decl);
 		}
 
-		const repoName = queries[0].repoName;
-		const contents = generator.toString(repoName);
-
-		const outputFileName = generator.getOutputFileName(fileName);
-		await writeFile(outputFileName, contents);
-		return outputFileName;
+		const result = orchestrator.compile();
+		const fileNames = Object.keys(result);
+		await Promise.all(
+			fileNames.map((fileName) => writeFile(fileName, result[fileName])),
+		);
+		return fileNames;
 	} catch (error) {
 		if (error instanceof Error) {
-			return new Error(fileName, { cause: error });
+			return new Error(inputFileName, { cause: error });
 		}
 		throw new Error("Internal error", { cause: error });
 	}
@@ -74,10 +73,10 @@ const cliMain = async () => {
 	const databaseDetails = await fetchDatabaseDetails(client);
 	const clientEndPromise = client.end();
 
-	const promises: Promise<string | Error>[] = [];
+	const promises: Promise<string[] | Error>[] = [];
 	for await (const fileName of glob(config.files)) {
-		const generator = new TsGenerator();
-		promises.push(processFile(databaseDetails, generator, fileName));
+		const orchestrator = Orchestrator.createFromConfig(config, fileName);
+		promises.push(processFile(databaseDetails, orchestrator));
 	}
 
 	const results = await Promise.all(promises);
@@ -104,8 +103,8 @@ const cliMain = async () => {
 		if (fileIsWatched(path, config.files)) {
 			// eslint-disable-next-line no-console
 			console.log(`Rebuilding ${path}...`);
-			const generator = new TsGenerator();
-			const result = await processFile(databaseDetails, generator, path);
+			const orchestrator = Orchestrator.createFromConfig(config, path);
+			const result = await processFile(databaseDetails, orchestrator);
 			if (result instanceof Error) {
 				reportFileError(result);
 			} else {

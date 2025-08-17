@@ -9,44 +9,49 @@ import {
 import { Generator } from "./Generator";
 import { ParamMap } from "./ParamMap";
 
+const typescriptDataTypes = {
+	bigint: "BigInt",
+	bigserial: "BigInt",
+	boolean: "boolean",
+	bytea: "ArrayBuffer",
+	"character varying": "string",
+	cidr: "string",
+	date: "Date",
+	varchar: "string",
+	"double precision": "number",
+	float: "number",
+	inet: "string",
+	integer: "number",
+	interval: "number",
+	json: "Json",
+	jsonb: "Json",
+	money: "number",
+	real: "number",
+	smallint: "number",
+	smallserial: "number",
+	serial: "number",
+	text: "string",
+	time: "Date",
+	"time without time zone": "Date",
+	"time with time zone": "Date",
+	"timestamp without time zone": "Date",
+	"timestamp with time zone": "Date",
+	tsquery: "string[]",
+	tsvector: "string[]",
+	unknown: "unknown",
+	uuid: "string",
+	xml: "string",
+	null: "null",
+};
+
 export class TsGenerator extends Generator {
+	private repoName: string | null = null;
+	private importTypesGenerator: Generator | null = null;
 	private hasJson = false;
 
 	constructor(
-		protected readonly dataTypes: Record<string, string> = {
-			bigint: "BigInt",
-			bigserial: "BigInt",
-			boolean: "boolean",
-			bytea: "ArrayBuffer",
-			"character varying": "string",
-			cidr: "string",
-			date: "Date",
-			varchar: "string",
-			"double precision": "number",
-			float: "number",
-			inet: "string",
-			integer: "number",
-			interval: "number",
-			json: "Json",
-			jsonb: "Json",
-			money: "number",
-			real: "number",
-			smallint: "number",
-			smallserial: "number",
-			serial: "number",
-			text: "string",
-			time: "Date",
-			"time without time zone": "Date",
-			"time with time zone": "Date",
-			"timestamp without time zone": "Date",
-			"timestamp with time zone": "Date",
-			tsquery: "string[]",
-			tsvector: "string[]",
-			unknown: "unknown",
-			uuid: "string",
-			xml: "string",
-			null: "null",
-		},
+		protected inputFileName: string,
+		protected readonly dataTypes: Record<string, string> = typescriptDataTypes,
 		private readonly arraySuffix = "[]",
 		private readonly nullableSuffix = " | null",
 		private readonly optionalSuffix = "?",
@@ -54,6 +59,10 @@ export class TsGenerator extends Generator {
 		private readonly objectSuffix = "}",
 	) {
 		super();
+	}
+
+	setImportTypesGenerator(generator: Generator) {
+		this.importTypesGenerator = generator;
 	}
 
 	private generateSimpleType(dataType: string): string {
@@ -147,28 +156,57 @@ export class TsGenerator extends Generator {
 		return `export interface ${name} ${ty}`;
 	}
 
-	private generateSqlString(
-		repoName: string | undefined,
-		queryName: string,
-		sql: string,
-	) {
+	private generateSqlString(queryName: string, sql: string) {
+		const repoName = this.repoName;
 		const sqlStringName = this.queryNameToSqlName(queryName);
 		const comment = `-- ${repoName ? `${repoName}.` : ""}${queryName}\n`;
 		const escapedSql = sql.replaceAll("`", "\\`");
 		return `export const ${sqlStringName} = \`${comment}${escapedSql}\`;`;
 	}
 
-	protected generateImports(repoName?: string): string[] {
+	private generateTradukistoImports(): string | null {
 		const imports = [];
-		if (this.hasJson) {
+		if (this.hasJson && !this.importTypesGenerator) {
 			imports.push("Json");
 		}
-		if (repoName) {
+		if (this.repoName) {
 			imports.push("PostgresClient");
 		}
 		return imports.length
-			? [`import type { ${imports.join(", ")} } from "tradukisto";`]
-			: [];
+			? `import type { ${imports.join(", ")} } from "tradukisto";`
+			: null;
+	}
+
+	private generateTypeImports(): string | null {
+		if (!this.importTypesGenerator) {
+			return null;
+		}
+		const imports: string[] = [];
+		for (const declName in this.declarations) {
+			const decl = this.declarations[declName];
+			const { typeName } = decl.getParsedQuery();
+			const paramTypeName = this.typeNameToParamsName(typeName);
+			const resultType = decl.resolveResultType();
+			const parameterTypes = decl.resolveParameterTypes();
+			if (Object.keys(resultType).length) {
+				imports.push(typeName);
+			}
+			if (Object.keys(parameterTypes).length) {
+				imports.push(paramTypeName);
+			}
+		}
+		if (!imports.length) {
+			return null;
+		}
+		const fileName = this.importTypesGenerator.getOutputFileName();
+		const filePath = `./${fileName.replace(".ts$", "")}`;
+		return `import type {\n  ${imports.join(",\n  ")},\n} from "${filePath}";`;
+	}
+
+	protected generateImports(): string | null {
+		return [this.generateTradukistoImports(), this.generateTypeImports()]
+			.filter(Boolean)
+			.join("\n");
 	}
 
 	private queryNameToSqlName(queryName: string) {
@@ -224,9 +262,9 @@ export class TsGenerator extends Generator {
 		return result.join("\n");
 	}
 
-	private generateRepo(name: string): string {
+	private generateRepo(): string {
 		const result: string[] = [
-			`export class ${name}Repo {`,
+			`export class ${this.repoName}Repo {`,
 			"  protected client: PostgresClient;\n",
 			"  constructor(client: PostgresClient) {",
 			"    this.client = client;",
@@ -239,33 +277,49 @@ export class TsGenerator extends Generator {
 		return result.join("\n");
 	}
 
-	toString(repoName?: string): string {
+	toString(): string {
+		for (const declName in this.declarations) {
+			const repoName = this.declarations[declName].getParsedQuery().repoName;
+			if (repoName) {
+				this.repoName = repoName;
+				break;
+			}
+		}
+
 		const result: string[] = [];
 		for (const declName in this.declarations) {
 			const decl = this.declarations[declName];
 			const { queryName, typeName, query } = decl.getParsedQuery();
-			const paramTypeName = this.typeNameToParamsName(typeName);
-			const resultType = decl.resolveResultType();
-			const parameterTypes = decl.resolveParameterTypes();
-			if (Object.keys(resultType).length) {
-				const ty = this.generateType(typeName, resultType, false);
-				result.push(ty);
+			if (!this.importTypesGenerator) {
+				const paramTypeName = this.typeNameToParamsName(typeName);
+				const resultType = decl.resolveResultType();
+				const parameterTypes = decl.resolveParameterTypes();
+				if (Object.keys(resultType).length) {
+					const ty = this.generateType(typeName, resultType, false);
+					result.push(ty);
+				}
+				if (Object.keys(parameterTypes).length) {
+					const ty = this.generateType(
+						paramTypeName,
+						parameterTypes,
+						true,
+					);
+					result.push(ty);
+				}
 			}
-			if (Object.keys(parameterTypes).length) {
-				const ty = this.generateType(paramTypeName, parameterTypes, true);
-				result.push(ty);
-			}
-			result.push(this.generateSqlString(repoName, queryName, query));
+			result.push(this.generateSqlString(queryName, query));
 		}
-		if (repoName) {
-			result.push(this.generateRepo(repoName));
+		if (this.repoName) {
+			result.push(this.generateRepo());
 		}
-		return [Generator.header, ...this.generateImports(repoName), ...result].join(
-			"\n\n",
-		);
+		const imports = this.generateImports();
+		if (imports) {
+			result.unshift(imports);
+		}
+		return [Generator.header, ...result].join("\n\n");
 	}
 
-	getOutputFileName(inputFileName: string): string {
-		return inputFileName.replace(/sql$/, "repo.ts");
+	getOutputFileName(): string {
+		return this.inputFileName.replace(/sql$/, "repo.ts");
 	}
 }

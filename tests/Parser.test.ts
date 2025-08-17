@@ -2,7 +2,7 @@ import { expect, describe, it } from "vitest";
 import { parseSql, StringCompilationUnit } from "../src";
 
 describe("Parser", () => {
-	it("parser single SQL statement into an AST array", async () => {
+	it("Parses single SQL statement into an AST array", async () => {
 		const queries = await parseSql(
 			new StringCompilationUnit("-- @query testQuery\nSELECT * FROM users"),
 		);

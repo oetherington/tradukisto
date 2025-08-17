@@ -1,11 +1,11 @@
 # Tradukisto
-## Generate Typescript types for SQL queries
+## Generate Typescript types and Zod schemas for SQL queries
 
 [![NPM Version](https://img.shields.io/npm/v/tradukisto)](https://www.npmjs.com/package/tradukisto)
 
-Tradukisto is a tool for generating Typescript types for arbitrary SQL queries
-based on the Schema of a live Postgres database, plus some basic templating
-utilities.
+Tradukisto is a tool for generating Typescript types and Zod schemas for
+arbitrary SQL queries based on the Schema of a live Postgres database, plus some
+basic templating utilities.
 
 ### Disclaimer
 
@@ -52,6 +52,8 @@ below:
     "connectionVariableName": "DATABASE_URL",
     // The maximum stack depth for partial expansions
     "partialStackDepth": 100,
+    // Generate zod schemas for input and output types
+    "zod": true,
 }
 ```
 

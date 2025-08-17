@@ -1,5 +1,6 @@
 {
 	"files": "*.sql",
 	"connectionVariableName": "DBCONN",
-	"partialStackDepth": 10
+	"partialStackDepth": 10,
+	"zod": false
 }

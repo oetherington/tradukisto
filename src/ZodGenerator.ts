@@ -5,43 +5,46 @@ import { TsGenerator } from "./TsGenerator";
 const dateType =
 	"z.union([z.string(), z.date()]).pipe(z.transform((val) => val instanceof Date ? val : new Date(val)))";
 
+const zodDataTypes = {
+	bigint: "z.bigint()",
+	bigserial: "z.bigint()",
+	boolean: "z.boolean()",
+	bytea: "z.int().array()",
+	"character varying": "z.string()",
+	cidr: "z.string()",
+	date: dateType,
+	varchar: "z.string()",
+	"double precision": "z.number()",
+	float: "z.()number",
+	ine: "z.string()",
+	integer: "z.integer()",
+	interval: "z.number()",
+	json: "z.json()",
+	jsonb: "z.json()",
+	money: "z.number()",
+	real: "z.number()",
+	smallint: "z.integer()",
+	smallserial: "z.integer()",
+	serial: "z.integer()",
+	text: "z.string()",
+	time: dateType,
+	"time without time zone": dateType,
+	"time with time zone": dateType,
+	"timestamp without time zone": dateType,
+	"timestamp with time zone": dateType,
+	tsquery: "z.string().array()",
+	tsvector: "z.string().array()",
+	unknown: "z.unknown()",
+	uuid: "z.string()",
+	xml: "z.string()",
+	null: "z.null()",
+};
+
 export class ZodGenerator extends TsGenerator {
-	constructor() {
+	constructor(inputFileName: string) {
 		super(
-			{
-				bigint: "z.bigint()",
-				bigserial: "z.bigint()",
-				boolean: "z.boolean()",
-				bytea: "z.int().array()",
-				"character varying": "z.string()",
-				cidr: "z.string()",
-				date: dateType,
-				varchar: "z.string()",
-				"double precision": "z.number()",
-				float: "z.()number",
-				ine: "z.string()",
-				integer: "z.integer()",
-				interval: "z.number()",
-				json: "z.json()",
-				jsonb: "z.json()",
-				money: "z.number()",
-				real: "z.number()",
-				smallint: "z.integer()",
-				smallserial: "z.integer()",
-				serial: "z.integer()",
-				text: "z.string()",
-				time: dateType,
-				"time without time zone": dateType,
-				"time with time zone": dateType,
-				"timestamp without time zone": dateType,
-				"timestamp with time zone": dateType,
-				tsquery: "z.string().array()",
-				tsvector: "z.string().array()",
-				unknown: "z.unknown()",
-				uuid: "z.string()",
-				xml: "z.string()",
-				null: "z.null()",
-			},
+			inputFileName,
+			zodDataTypes,
 			".array()",
 			".optional()",
 			"",
@@ -62,6 +65,10 @@ export class ZodGenerator extends TsGenerator {
 
 	toString(): string {
 		const result: string[] = [Generator.header, `import z from "zod/v4";`];
+		const imports = this.generateImports();
+		if (imports) {
+			result.push(imports);
+		}
 		for (const declName in this.declarations) {
 			const decl = this.declarations[declName];
 			const { typeName } = decl.getParsedQuery();
@@ -80,7 +87,7 @@ export class ZodGenerator extends TsGenerator {
 		return result.join("\n\n");
 	}
 
-	getOutputFileName(inputFileName: string): string {
-		return inputFileName.replace(/sql$/, "schemas.ts");
+	getOutputFileName(): string {
+		return this.inputFileName.replace(/sql$/, "schemas.ts");
 	}
 }

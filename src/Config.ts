@@ -4,15 +4,17 @@ type ConfigContents = {
 	files: string | string[];
 	connectionVariableName: string;
 	partialStackDepth: number;
+	zod: boolean;
 };
 
-type Config = Readonly<ConfigContents>;
+export type Config = Readonly<ConfigContents>;
 
 // Note that these values are duplicated in the README documentation
 export const defaultConfig: Config = {
 	files: "./**/*.sql",
 	connectionVariableName: "DATABASE_URL",
 	partialStackDepth: 100,
+	zod: true,
 };
 
 export const parseConfig = (contents: string): Config => {
@@ -43,6 +45,11 @@ export const parseConfig = (contents: string): Config => {
 			config.partialStackDepth = json.partialStackDepth;
 		} else if (json.partialStackDepth) {
 			throw new Error("`partialStackDepth` should be an integer");
+		}
+		if (typeof json.zod === "boolean") {
+			config.zod = json.zod;
+		} else if (json.zod) {
+			throw new Error("`zod` should be a boolean");
 		}
 		return config;
 	} catch (e) {
