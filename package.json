@@ -1,7 +1,16 @@
 {
 	"name": "tradukisto",
 	"version": "0.0.9",
-	"description": "Generate Typescript types for SQL queries",
+	"description": "Generate Typescript types and Zod schemas for SQL queries",
+	"keywords": [
+		"typescript",
+		"zod",
+		"schema",
+		"sql",
+		"postgres",
+		"parser",
+		"compiler"
+	],
 	"homepage": "https://github.com/oetherington/tradukisto#readme",
 	"bugs": {
 		"url": "https://github.com/oetherington/tradukisto/issues"
