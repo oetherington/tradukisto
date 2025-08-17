@@ -14,4 +14,6 @@ export abstract class Generator {
 	}
 
 	abstract toString(repoName?: string): string;
+
+	abstract getOutputFileName(inputFileName: string): string;
 }

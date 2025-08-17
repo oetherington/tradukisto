@@ -264,4 +264,8 @@ export class TsGenerator extends Generator {
 			"\n\n",
 		);
 	}
+
+	getOutputFileName(inputFileName: string): string {
+		return inputFileName.replace(/sql$/, "repo.ts");
+	}
 }

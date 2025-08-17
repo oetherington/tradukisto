@@ -35,9 +35,8 @@ const processFile = async (
 		const repoName = queries[0].repoName;
 		const contents = generator.toString(repoName);
 
-		const outputFileName = fileName.replace(/sql$/, "queries.ts");
+		const outputFileName = generator.getOutputFileName(fileName);
 		await writeFile(outputFileName, contents);
-
 		return outputFileName;
 	} catch (error) {
 		if (error instanceof Error) {

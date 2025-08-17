@@ -8,6 +8,11 @@ import {
 } from "../src";
 
 describe("ZodGenerator", () => {
+	it("Formats output file name", () => {
+		const generator = new ZodGenerator();
+		const outputFileName = generator.getOutputFileName("test.sql");
+		expect(outputFileName).toBe("test.schemas.ts");
+	});
 	describe("Generates simple zod types", () => {
 		const types: Record<string, string> = {
 			"character varying": "z.string()",

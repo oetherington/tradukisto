@@ -79,4 +79,8 @@ export class ZodGenerator extends TsGenerator {
 		}
 		return result.join("\n\n");
 	}
+
+	getOutputFileName(inputFileName: string): string {
+		return inputFileName.replace(/sql$/, "schemas.ts");
+	}
 }
